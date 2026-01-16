@@ -5,7 +5,8 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(pnpm lint:ts:*)",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(pnpm lint:*)"
     ],
     "additionalDirectories": [
       "/Users/otiai10/proj/stellar/expense-summarizer",

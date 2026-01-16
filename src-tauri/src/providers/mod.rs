@@ -98,6 +98,7 @@ pub struct OcrProgressEvent {
 #[async_trait]
 pub trait OcrProvider: Send + Sync {
     /// プロバイダー名
+    #[allow(dead_code)]
     fn name(&self) -> &str;
 
     /// 設定が有効かどうか
@@ -154,11 +155,13 @@ impl OcrProviderRegistry {
     }
 
     /// 名前でプロバイダーを取得
+    #[allow(dead_code)]
     pub fn get_provider(&self, name: &str) -> Option<Arc<dyn OcrProvider>> {
         self.providers.iter().find(|p| p.name() == name).cloned()
     }
 
     /// 利用可能なプロバイダー名一覧を取得
+    #[allow(dead_code)]
     pub fn list_providers(&self) -> Vec<String> {
         self.providers.iter().map(|p| p.name().to_string()).collect()
     }
