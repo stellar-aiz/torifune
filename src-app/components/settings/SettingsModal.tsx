@@ -1,16 +1,29 @@
 import { useState, useEffect } from "react";
-import { FiX, FiCheck, FiAlertCircle } from "react-icons/fi";
+import { FiX, FiCheck, FiAlertCircle, FiCpu } from "react-icons/fi";
 import { useSettingsStore } from "../../hooks/useSettingsStore";
 import { testProviderConnection } from "../../services/tauri/commands";
+import type { OcrProvider } from "../../types/receipt";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+type SettingsTab = "ocr";
+
+const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+  { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
+];
+
+const providers: { id: OcrProvider; label: string }[] = [
+  { id: "googledocumentai", label: "Google Document AI" },
+  { id: "veryfi", label: "Veryfi" },
+];
+
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const settingsStore = useSettingsStore();
   const [localSettings, setLocalSettings] = useState(settingsStore.settings);
+  const [activeTab, setActiveTab] = useState<SettingsTab>("ocr");
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
@@ -48,14 +61,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   };
 
+  const selectedProvider = localSettings.provider ?? "googledocumentai";
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-xl w-full mx-8 max-h-[90vh] overflow-hidden flex flex-col">
         {/* ヘッダー */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800">OCR設定</h2>
+          <h2 className="text-lg font-semibold text-gray-800">設定</h2>
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -64,146 +79,296 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
         </div>
 
-        {/* コンテンツ */}
-        <div className="p-6 overflow-y-auto">
-          <div className="space-y-4">
-            {/* Google Document AI セクション */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-700">
-                Google Document AI
-              </h3>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  プロジェクトID
-                </label>
-                <input
-                  type="text"
-                  value={localSettings.projectId ?? ""}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      projectId: e.target.value || undefined,
-                    })
-                  }
-                  placeholder="your-project-id"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  ロケーション
-                </label>
-                <input
-                  type="text"
-                  value={localSettings.location ?? ""}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      location: e.target.value || undefined,
-                    })
-                  }
-                  placeholder="us (デフォルト)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  プロセッサID
-                </label>
-                <input
-                  type="text"
-                  value={localSettings.processorId ?? ""}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      processorId: e.target.value || undefined,
-                    })
-                  }
-                  placeholder="0000000000000000"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">
-                  サービスアカウントJSON
-                </label>
-                <textarea
-                  value={localSettings.serviceAccountJson ?? ""}
-                  onChange={(e) =>
-                    setLocalSettings({
-                      ...localSettings,
-                      serviceAccountJson: e.target.value || undefined,
-                    })
-                  }
-                  placeholder='{"type": "service_account", ...}'
-                  rows={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  GCPコンソールからダウンロードしたサービスアカウントキーのJSON全体を貼り付けてください
-                </p>
-              </div>
-            </div>
-
-            {/* 接続テスト結果 */}
-            {testResult && (
-              <div
+        {/* タブコンテンツエリア */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* 左側：タブリスト */}
+          <div className="w-48 border-r border-gray-200 bg-gray-50 p-2 flex-shrink-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-start gap-2 p-3 rounded-lg
-                  ${testResult.success ? "bg-green-50" : "bg-red-50"}
+                  w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                  ${activeTab === tab.id
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:bg-gray-100"
+                  }
                 `}
               >
-                {testResult.success ? (
-                  <FiCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
-                ) : (
-                  <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* 右側：タブコンテンツ */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === "ocr" && (
+              <div className="space-y-6">
+                {/* プロバイダ選択 */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700">
+                    OCRプロバイダ
+                  </h3>
+                  <div className="flex gap-4">
+                    {providers.map((provider) => (
+                      <label
+                        key={provider.id}
+                        className={`
+                          flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors
+                          ${selectedProvider === provider.id
+                            ? "border-blue-500 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                          }
+                        `}
+                      >
+                        <input
+                          type="radio"
+                          name="provider"
+                          value={provider.id}
+                          checked={selectedProvider === provider.id}
+                          onChange={(e) =>
+                            setLocalSettings({
+                              ...localSettings,
+                              provider: e.target.value as OcrProvider,
+                            })
+                          }
+                        />
+                        <span className="text-sm font-medium text-gray-800">
+                          {provider.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Google Document AI 設定 */}
+                {selectedProvider === "googledocumentai" && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Google Document AI 設定
+                    </h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        プロジェクトID
+                      </label>
+                      <input
+                        type="text"
+                        value={localSettings.projectId ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            projectId: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="your-project-id"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        ロケーション
+                      </label>
+                      <input
+                        type="text"
+                        value={localSettings.location ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            location: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="us (デフォルト)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        プロセッサID
+                      </label>
+                      <input
+                        type="text"
+                        value={localSettings.processorId ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            processorId: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="0000000000000000"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        サービスアカウントJSON
+                      </label>
+                      <textarea
+                        value={localSettings.serviceAccountJson ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            serviceAccountJson: e.target.value || undefined,
+                          })
+                        }
+                        placeholder='{"type": "service_account", ...}'
+                        rows={6}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        GCPコンソールからダウンロードしたサービスアカウントキーのJSON全体を貼り付けてください
+                      </p>
+                    </div>
+                  </div>
                 )}
-                <span
-                  className={`text-sm ${
-                    testResult.success ? "text-green-700" : "text-red-700"
-                  }`}
-                >
-                  {testResult.message}
-                </span>
+
+                {/* Veryfi 設定 */}
+                {selectedProvider === "veryfi" && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-semibold text-gray-700">
+                      Veryfi 設定
+                    </h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        クライアントID
+                      </label>
+                      <input
+                        type="text"
+                        value={localSettings.veryfiClientId ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            veryfiClientId: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="vrfXXXXXXXX"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        クライアントシークレット
+                      </label>
+                      <input
+                        type="password"
+                        value={localSettings.veryfiClientSecret ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            veryfiClientSecret: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="••••••••••••"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        ユーザー名
+                      </label>
+                      <input
+                        type="text"
+                        value={localSettings.veryfiUsername ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            veryfiUsername: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="your-username"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600 mb-1">
+                        APIキー
+                      </label>
+                      <input
+                        type="password"
+                        value={localSettings.veryfiApiKey ?? ""}
+                        onChange={(e) =>
+                          setLocalSettings({
+                            ...localSettings,
+                            veryfiApiKey: e.target.value || undefined,
+                          })
+                        }
+                        placeholder="••••••••••••"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      Veryfi のダッシュボードから API 認証情報を取得してください
+                    </p>
+                  </div>
+                )}
+
+                {/* 接続テスト結果 */}
+                {testResult && (
+                  <div
+                    className={`
+                      flex items-start gap-2 p-3 rounded-lg
+                      ${testResult.success ? "bg-green-50" : "bg-red-50"}
+                    `}
+                  >
+                    {testResult.success ? (
+                      <FiCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    ) : (
+                      <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    )}
+                    <span
+                      className={`text-sm ${
+                        testResult.success ? "text-green-700" : "text-red-700"
+                      }`}
+                    >
+                      {testResult.message}
+                    </span>
+                  </div>
+                )}
+
+                {/* 接続テストボタン */}
+                <div className="pt-2">
+                  <button
+                    onClick={handleTestConnection}
+                    disabled={isTesting}
+                    className={`
+                      px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                      ${isTesting
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }
+                    `}
+                  >
+                    {isTesting ? "テスト中..." : "接続テスト"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         {/* フッター */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-200 bg-gray-50">
           <button
-            onClick={handleTestConnection}
-            disabled={isTesting}
-            className={`
-              px-4 py-2 rounded-lg text-sm font-medium transition-colors
-              ${isTesting
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }
-            `}
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            {isTesting ? "テスト中..." : "接続テスト"}
+            キャンセル
           </button>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              キャンセル
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-            >
-              保存
-            </button>
-          </div>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          >
+            保存
+          </button>
         </div>
       </div>
     </div>

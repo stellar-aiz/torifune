@@ -1,88 +1,212 @@
 /**
  * レシートストアフック
- * レシートデータの管理とOCR処理を担当
+ * 申請月（ApplicationMonth）ごとのレシートデータ管理とOCR処理を担当
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { nanoid } from "nanoid";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import type { ReceiptData, OcrProgressEvent } from "../types/receipt";
+import type {
+  ReceiptData,
+  OcrProgressEvent,
+  ApplicationMonth,
+} from "../types/receipt";
+import { getCurrentYearMonth } from "../types/receipt";
 import { batchOcrReceipts } from "../services/tauri/commands";
-import { readFileAsBase64, getMimeType, generateThumbnail } from "../services/pdf/pdfExtractor";
+import {
+  readFileAsBase64,
+  getMimeType,
+  generateThumbnail,
+} from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
 
 export interface ReceiptStoreState {
-  receipts: ReceiptData[];
+  months: ApplicationMonth[];
+  currentMonthId: string | null;
   isProcessing: boolean;
 }
 
 export interface ReceiptStoreActions {
+  // 申請月操作
+  createMonth: (yearMonth?: string) => void;
+  selectMonth: (monthId: string) => void;
+  deleteMonth: (monthId: string) => void;
+  // レシート操作
   addReceipts: (filePaths: string[]) => Promise<void>;
   removeReceipt: (id: string) => void;
   updateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
+  // OCR操作
   startOcr: () => Promise<void>;
-  clearAll: () => void;
+  clearCurrentMonth: () => void;
 }
 
 export type UseReceiptStoreReturn = ReceiptStoreState & ReceiptStoreActions;
 
+/** 現在の申請月を取得するヘルパー */
+function getCurrentMonth(
+  months: ApplicationMonth[],
+  currentMonthId: string | null
+): ApplicationMonth | undefined {
+  return months.find((m) => m.id === currentMonthId);
+}
+
 export function useReceiptStore(): UseReceiptStoreReturn {
-  const [receipts, setReceipts] = useState<ReceiptData[]>([]);
+  const [months, setMonths] = useState<ApplicationMonth[]>([]);
+  const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  /** レシートを追加 */
-  const addReceipts = useCallback(async (filePaths: string[]) => {
-    const newReceipts: ReceiptData[] = [];
+  /** 現在の申請月のレシート一覧 */
+  const currentReceipts = useMemo(() => {
+    const month = getCurrentMonth(months, currentMonthId);
+    return month?.receipts ?? [];
+  }, [months, currentMonthId]);
 
-    for (const filePath of filePaths) {
-      const fileName = filePath.split(/[/\\]/).pop() ?? filePath;
+  /** 現在の申請月のyearMonth */
+  const currentYearMonth = useMemo(() => {
+    const month = getCurrentMonth(months, currentMonthId);
+    return month?.yearMonth ?? null;
+  }, [months, currentMonthId]);
 
-      // サムネイル生成
-      let thumbnailDataUrl: string | undefined;
-      try {
-        thumbnailDataUrl = await generateThumbnail(filePath);
-      } catch (error) {
-        console.warn("Failed to generate thumbnail:", error);
+  /** 申請月を作成 */
+  const createMonth = useCallback((yearMonth?: string) => {
+    const newYearMonth = yearMonth ?? getCurrentYearMonth();
+
+    setMonths((prev) => {
+      // 同じyearMonthの申請月が既にあればそれを選択
+      const existing = prev.find((m) => m.yearMonth === newYearMonth);
+      if (existing) {
+        setCurrentMonthId(existing.id);
+        return prev;
       }
 
-      newReceipts.push({
-        id: nanoid(),
-        file: fileName,
-        filePath,
-        status: "pending",
-        thumbnailDataUrl,
-      });
-    }
-
-    setReceipts((prev) => [...prev, ...newReceipts]);
+      const newMonth: ApplicationMonth = {
+        id: nanoid(6),
+        yearMonth: newYearMonth,
+        receipts: [],
+      };
+      setCurrentMonthId(newMonth.id);
+      return [...prev, newMonth];
+    });
   }, []);
+
+  /** 申請月を選択 */
+  const selectMonth = useCallback((monthId: string) => {
+    setCurrentMonthId(monthId);
+  }, []);
+
+  /** 申請月を削除 */
+  const deleteMonth = useCallback(
+    (monthId: string) => {
+      setMonths((prev) => prev.filter((m) => m.id !== monthId));
+
+      // 削除した申請月が現在選択中の場合、別の申請月を選択
+      if (currentMonthId === monthId) {
+        const remaining = months.filter((m) => m.id !== monthId);
+        setCurrentMonthId(remaining.length > 0 ? remaining[0].id : null);
+      }
+    },
+    [currentMonthId, months]
+  );
+
+  /** レシートを追加 */
+  const addReceipts = useCallback(
+    async (filePaths: string[]) => {
+      if (!currentMonthId) return;
+
+      const newReceipts: ReceiptData[] = [];
+
+      for (const filePath of filePaths) {
+        const fileName = filePath.split(/[/\\]/).pop() ?? filePath;
+
+        // サムネイル生成
+        let thumbnailDataUrl: string | undefined;
+        try {
+          thumbnailDataUrl = await generateThumbnail(filePath);
+        } catch (error) {
+          console.warn("Failed to generate thumbnail:", error);
+        }
+
+        newReceipts.push({
+          id: nanoid(),
+          file: fileName,
+          filePath,
+          status: "pending",
+          thumbnailDataUrl,
+        });
+      }
+
+      setMonths((prev) =>
+        prev.map((m) =>
+          m.id === currentMonthId
+            ? { ...m, receipts: [...m.receipts, ...newReceipts] }
+            : m
+        )
+      );
+    },
+    [currentMonthId]
+  );
 
   /** レシートを削除 */
-  const removeReceipt = useCallback((id: string) => {
-    setReceipts((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+  const removeReceipt = useCallback(
+    (id: string) => {
+      if (!currentMonthId) return;
+
+      setMonths((prev) =>
+        prev.map((m) =>
+          m.id === currentMonthId
+            ? { ...m, receipts: m.receipts.filter((r) => r.id !== id) }
+            : m
+        )
+      );
+    },
+    [currentMonthId]
+  );
 
   /** レシートを更新 */
   const updateReceipt = useCallback(
     (id: string, updates: Partial<ReceiptData>) => {
-      setReceipts((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
+      if (!currentMonthId) return;
+
+      setMonths((prev) =>
+        prev.map((m) =>
+          m.id === currentMonthId
+            ? {
+                ...m,
+                receipts: m.receipts.map((r) =>
+                  r.id === id ? { ...r, ...updates } : r
+                ),
+              }
+            : m
+        )
       );
     },
-    []
+    [currentMonthId]
   );
 
   /** OCR処理を開始 */
   const startOcr = useCallback(async () => {
-    const pendingReceipts = receipts.filter((r) => r.status === "pending");
+    if (!currentMonthId || !currentYearMonth) return;
+
+    const pendingReceipts = currentReceipts.filter(
+      (r) => r.status === "pending"
+    );
     if (pendingReceipts.length === 0) return;
 
     setIsProcessing(true);
 
     // すべてのpendingレシートをprocessingに更新
-    setReceipts((prev) =>
-      prev.map((r) =>
-        r.status === "pending" ? { ...r, status: "processing" as const } : r
+    setMonths((prev) =>
+      prev.map((m) =>
+        m.id === currentMonthId
+          ? {
+              ...m,
+              receipts: m.receipts.map((r) =>
+                r.status === "pending"
+                  ? { ...r, status: "processing" as const }
+                  : r
+              ),
+            }
+          : m
       )
     );
 
@@ -95,26 +219,33 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         if (result) {
           const targetReceipt = pendingReceipts[current];
           if (targetReceipt) {
-            setReceipts((prev) =>
-              prev.map((r) => {
-                if (r.id !== targetReceipt.id) return r;
+            setMonths((prev) =>
+              prev.map((m) =>
+                m.id === currentMonthId
+                  ? {
+                      ...m,
+                      receipts: m.receipts.map((r) => {
+                        if (r.id !== targetReceipt.id) return r;
 
-                if (result.success && result.data) {
-                  return {
-                    ...r,
-                    status: "success" as const,
-                    merchant: result.data.merchant,
-                    date: result.data.date,
-                    total: result.data.total,
-                  };
-                } else {
-                  return {
-                    ...r,
-                    status: "error" as const,
-                    errorMessage: result.error,
-                  };
-                }
-              })
+                        if (result.success && result.data) {
+                          return {
+                            ...r,
+                            status: "success" as const,
+                            merchant: result.data.merchant,
+                            date: result.data.date,
+                            total: result.data.total,
+                          };
+                        } else {
+                          return {
+                            ...r,
+                            status: "error" as const,
+                            errorMessage: result.error,
+                          };
+                        }
+                      }),
+                    }
+                  : m
+              )
             );
           }
         }
@@ -138,50 +269,76 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       await batchOcrReceipts(requests);
 
       // バリデーション実行
-      setReceipts((prev) => {
-        const successReceipts = prev.filter((r) => r.status === "success");
-        if (successReceipts.length === 0) return prev;
+      setMonths((prev) =>
+        prev.map((m) => {
+          if (m.id !== currentMonthId) return m;
 
-        const targetSegment = new Date()
-          .toISOString()
-          .slice(0, 7)
-          .replace("-", "");
-        const validated = validateAllReceipts(successReceipts, targetSegment);
+          const successReceipts = m.receipts.filter(
+            (r) => r.status === "success"
+          );
+          if (successReceipts.length === 0) return m;
 
-        return prev.map((r) => {
-          const validatedReceipt = validated.find((v) => v.id === r.id);
-          return validatedReceipt ?? r;
-        });
-      });
+          const validated = validateAllReceipts(successReceipts, currentYearMonth);
+
+          return {
+            ...m,
+            receipts: m.receipts.map((r) => {
+              const validatedReceipt = validated.find((v) => v.id === r.id);
+              return validatedReceipt ?? r;
+            }),
+          };
+        })
+      );
     } catch (error) {
       console.error("OCR processing failed:", error);
 
       // エラー時はすべてのprocessingをerrorに更新
-      setReceipts((prev) =>
-        prev.map((r) =>
-          r.status === "processing"
-            ? { ...r, status: "error" as const, errorMessage: String(error) }
-            : r
+      setMonths((prev) =>
+        prev.map((m) =>
+          m.id === currentMonthId
+            ? {
+                ...m,
+                receipts: m.receipts.map((r) =>
+                  r.status === "processing"
+                    ? {
+                        ...r,
+                        status: "error" as const,
+                        errorMessage: String(error),
+                      }
+                    : r
+                ),
+              }
+            : m
         )
       );
     } finally {
       unlisten?.();
       setIsProcessing(false);
     }
-  }, [receipts]);
+  }, [currentMonthId, currentYearMonth, currentReceipts]);
 
-  /** すべてクリア */
-  const clearAll = useCallback(() => {
-    setReceipts([]);
-  }, []);
+  /** 現在の申請月をクリア */
+  const clearCurrentMonth = useCallback(() => {
+    if (!currentMonthId) return;
+
+    setMonths((prev) =>
+      prev.map((m) =>
+        m.id === currentMonthId ? { ...m, receipts: [] } : m
+      )
+    );
+  }, [currentMonthId]);
 
   return {
-    receipts,
+    months,
+    currentMonthId,
     isProcessing,
+    createMonth,
+    selectMonth,
+    deleteMonth,
     addReceipts,
     removeReceipt,
     updateReceipt,
     startOcr,
-    clearAll,
+    clearCurrentMonth,
   };
 }
