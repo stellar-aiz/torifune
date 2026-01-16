@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(pnpm lint:ts:*)",
+      "Bash(cargo check:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/otiai10/proj/stellar/expense-summarizer",
+      "/Users/otiai10/proj/ayanel/autosight"
+    ]
+  }
+}

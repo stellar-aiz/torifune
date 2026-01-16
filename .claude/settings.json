@@ -1,0 +1,33 @@
+{
+  "env": {
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "true"
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__o3__o3-search",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm lint:ts:*)",
+      "Bash(pnpm lint:rust:*)",
+      "Bash(pnpm test:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm lint"
+          }
+        ]
+      }
+    ]
+  }
+}
