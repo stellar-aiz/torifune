@@ -70,6 +70,7 @@ function App() {
                 <div className="flex-1 overflow-auto">
                   <ReceiptList
                     receipts={currentReceipts}
+                    yearMonth={currentMonth?.yearMonth ?? ""}
                     onRemove={store.removeReceipt}
                     onUpdateReceipt={store.updateReceipt}
                   />

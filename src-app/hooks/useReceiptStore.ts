@@ -3,7 +3,7 @@
  * 申請月（ApplicationMonth）ごとのレシートデータ管理とOCR処理を担当
  */
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { nanoid } from "nanoid";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
@@ -12,13 +12,14 @@ import type {
   ApplicationMonth,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
-import { batchOcrReceipts, ensureMonthDirectory } from "../services/tauri/commands";
+import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail } from "../services/tauri/commands";
 import {
   readFileAsBase64,
   getMimeType,
   generateThumbnail,
 } from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
+import { loadApplicationMonths } from "../services/persistence";
 
 export interface ReceiptStoreState {
   months: ApplicationMonth[];
@@ -54,6 +55,32 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   const [months, setMonths] = useState<ApplicationMonth[]>([]);
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // 起動時に既存のディレクトリから申請月を読み込む
+  useEffect(() => {
+    if (isInitialized) return;
+
+    const initialize = async () => {
+      try {
+        const loadedMonths = await loadApplicationMonths();
+        if (loadedMonths.length > 0) {
+          setMonths(loadedMonths);
+          // 最新の月を選択
+          const sorted = [...loadedMonths].sort((a, b) =>
+            b.yearMonth.localeCompare(a.yearMonth)
+          );
+          setCurrentMonthId(sorted[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load application months:", error);
+      } finally {
+        setIsInitialized(true);
+      }
+    };
+
+    initialize();
+  }, [isInitialized]);
 
   /** 現在の申請月のレシート一覧 */
   const currentReceipts = useMemo(() => {
@@ -119,39 +146,50 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   /** レシートを追加 */
   const addReceipts = useCallback(
     async (filePaths: string[]) => {
-      if (!currentMonthId) return;
+      if (!currentMonthId || !currentYearMonth) return;
 
       const newReceipts: ReceiptData[] = [];
 
       for (const filePath of filePaths) {
-        const fileName = filePath.split(/[/\\]/).pop() ?? filePath;
-
-        // サムネイル生成
-        let thumbnailDataUrl: string | undefined;
         try {
-          thumbnailDataUrl = await generateThumbnail(filePath);
-        } catch (error) {
-          console.warn("Failed to generate thumbnail:", error);
-        }
+          // ファイルを月別ディレクトリにコピー
+          const copyResult = await copyFileToMonth(filePath, currentYearMonth);
 
-        newReceipts.push({
-          id: nanoid(),
-          file: fileName,
-          filePath,
-          status: "pending",
-          thumbnailDataUrl,
-        });
+          // サムネイル生成（コピー後のパスで）
+          let thumbnailDataUrl: string | undefined;
+          try {
+            thumbnailDataUrl = await generateThumbnail(copyResult.destinationPath);
+            // サムネイルをファイルに保存
+            if (thumbnailDataUrl) {
+              await saveThumbnail(currentYearMonth, copyResult.fileName, thumbnailDataUrl);
+            }
+          } catch (error) {
+            console.warn("Failed to generate thumbnail:", error);
+          }
+
+          newReceipts.push({
+            id: nanoid(),
+            file: copyResult.fileName,
+            filePath: copyResult.destinationPath,
+            status: "pending",
+            thumbnailDataUrl,
+          });
+        } catch (error) {
+          console.error("Failed to copy file:", filePath, error);
+        }
       }
 
-      setMonths((prev) =>
-        prev.map((m) =>
-          m.id === currentMonthId
-            ? { ...m, receipts: [...m.receipts, ...newReceipts] }
-            : m
-        )
-      );
+      if (newReceipts.length > 0) {
+        setMonths((prev) =>
+          prev.map((m) =>
+            m.id === currentMonthId
+              ? { ...m, receipts: [...m.receipts, ...newReceipts] }
+              : m
+          )
+        );
+      }
     },
-    [currentMonthId]
+    [currentMonthId, currentYearMonth]
   );
 
   /** レシートを削除 */

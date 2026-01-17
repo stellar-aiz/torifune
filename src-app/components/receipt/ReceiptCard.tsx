@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FiX,
   FiAlertCircle,
@@ -8,20 +8,52 @@ import {
   FiAlertTriangle,
 } from "react-icons/fi";
 import type { ReceiptData } from "../../types/receipt";
+import { generateThumbnail } from "../../services/pdf/pdfExtractor";
+import { saveThumbnail } from "../../services/tauri/commands";
 
 interface ReceiptCardProps {
   receipt: ReceiptData;
+  yearMonth: string;
   onRemove: () => void;
   onUpdate: (updates: Partial<ReceiptData>) => void;
 }
 
-export function ReceiptCard({ receipt, onRemove, onUpdate }: ReceiptCardProps) {
+export function ReceiptCard({ receipt, yearMonth, onRemove, onUpdate }: ReceiptCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValues, setEditValues] = useState({
     merchant: receipt.merchant ?? "",
     date: receipt.date ?? "",
     total: receipt.total?.toString() ?? "",
   });
+
+  // 遅延サムネイル生成（サムネイルがない場合）
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+
+  useEffect(() => {
+    // サムネイルがあるか、既に生成中か、ファイルパスがない場合はスキップ
+    if (receipt.thumbnailDataUrl || isGeneratingThumbnail || !receipt.filePath) {
+      return;
+    }
+
+    const generateAndSaveThumbnail = async () => {
+      setIsGeneratingThumbnail(true);
+      try {
+        const thumbnail = await generateThumbnail(receipt.filePath);
+        if (thumbnail) {
+          // ファイルに保存
+          await saveThumbnail(yearMonth, receipt.file, thumbnail);
+          // ストアを更新
+          onUpdate({ thumbnailDataUrl: thumbnail });
+        }
+      } catch (error) {
+        console.warn("Failed to generate thumbnail:", error);
+      } finally {
+        setIsGeneratingThumbnail(false);
+      }
+    };
+
+    generateAndSaveThumbnail();
+  }, [receipt.thumbnailDataUrl, receipt.filePath, receipt.file, yearMonth, isGeneratingThumbnail, onUpdate]);
 
   const handleSave = () => {
     onUpdate({
@@ -63,6 +95,8 @@ export function ReceiptCard({ receipt, onRemove, onUpdate }: ReceiptCardProps) {
             alt={receipt.file}
             className="w-full h-full object-contain"
           />
+        ) : isGeneratingThumbnail ? (
+          <FiLoader className="w-6 h-6 text-gray-400 animate-spin" />
         ) : (
           <span className="text-gray-400 text-xs">No Preview</span>
         )}

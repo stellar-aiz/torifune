@@ -28,6 +28,13 @@ pub fn run() {
             commands::ensure_month_directory,
             commands::validate_directory,
             commands::create_directory,
+            commands::list_month_directories,
+            commands::write_summary_json,
+            commands::read_summary_json,
+            commands::list_files_in_directory,
+            commands::copy_file_to_month,
+            commands::save_thumbnail,
+            commands::read_thumbnail,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

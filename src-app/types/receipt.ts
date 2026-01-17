@@ -29,6 +29,23 @@ export interface ApplicationMonth {
   id: string; // short UUID (6桁)
   yearMonth: string; // "202501" 形式（ソート・表示用）
   receipts: ReceiptData[];
+  directoryPath?: string; // 実際のディレクトリパス
+}
+
+/** サイドバー用：月アイテム */
+export interface MonthItem {
+  month: string; // "01" 形式
+  yearMonth: string; // "202401" 形式（ApplicationMonthへの参照キー）
+  monthId: string; // ApplicationMonth.id
+  receiptCount: number;
+  successCount: number;
+}
+
+/** サイドバー用：年グループ */
+export interface YearGroup {
+  year: string; // "2024" 形式
+  months: MonthItem[]; // 月一覧（降順ソート）
+  isExpanded: boolean; // UI展開状態
 }
 
 /** 年月から表示名を生成 (YYYY年MM月、zero padding) */
@@ -89,4 +106,44 @@ export interface DirectoryValidation {
   exists: boolean;
   isDirectory: boolean;
   isWritable: boolean;
+}
+
+/** ApplicationMonth[] から YearGroup[] への変換 */
+export function groupByYear(
+  months: ApplicationMonth[],
+  expandedYears: Set<string> = new Set()
+): YearGroup[] {
+  const yearMap = new Map<string, MonthItem[]>();
+
+  for (const m of months) {
+    const year = m.yearMonth.slice(0, 4);
+    const month = m.yearMonth.slice(4, 6);
+    const successCount = m.receipts.filter((r) => r.status === "success").length;
+
+    const item: MonthItem = {
+      month,
+      yearMonth: m.yearMonth,
+      monthId: m.id,
+      receiptCount: m.receipts.length,
+      successCount,
+    };
+
+    if (!yearMap.has(year)) {
+      yearMap.set(year, []);
+    }
+    yearMap.get(year)!.push(item);
+  }
+
+  const result: YearGroup[] = [];
+  for (const [year, items] of yearMap) {
+    items.sort((a, b) => b.month.localeCompare(a.month)); // 降順
+    result.push({
+      year,
+      months: items,
+      isExpanded: expandedYears.has(year),
+    });
+  }
+
+  result.sort((a, b) => b.year.localeCompare(a.year)); // 降順
+  return result;
 }

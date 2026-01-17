@@ -3,11 +3,12 @@ import { ReceiptCard } from "./ReceiptCard";
 
 interface ReceiptListProps {
   receipts: ReceiptData[];
+  yearMonth: string;
   onRemove: (id: string) => void;
   onUpdateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
 }
 
-export function ReceiptList({ receipts, onRemove, onUpdateReceipt }: ReceiptListProps) {
+export function ReceiptList({ receipts, yearMonth, onRemove, onUpdateReceipt }: ReceiptListProps) {
   if (receipts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500 py-12">
@@ -22,6 +23,7 @@ export function ReceiptList({ receipts, onRemove, onUpdateReceipt }: ReceiptList
         <ReceiptCard
           key={receipt.id}
           receipt={receipt}
+          yearMonth={yearMonth}
           onRemove={() => onRemove(receipt.id)}
           onUpdate={(updates) => onUpdateReceipt(receipt.id, updates)}
         />

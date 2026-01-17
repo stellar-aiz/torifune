@@ -31,3 +31,6 @@ credentials
 
 # Agents
 .claude/settings.local.json
+
+# Claude Code generated plans
+knowledge/plans/claude/
