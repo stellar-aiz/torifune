@@ -28,3 +28,6 @@ credentials
 *.njsproj
 *.sln
 *.sw?
+
+# Agents
+.claude/settings.local.json
