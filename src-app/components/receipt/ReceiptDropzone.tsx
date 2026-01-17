@@ -1,6 +1,9 @@
-import { useCallback, useState, useRef } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { FiUploadCloud, FiFile } from "react-icons/fi";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
+
+const SUPPORTED_EXTENSIONS = /\.(jpe?g|png|pdf)$/i;
 
 interface ReceiptDropzoneProps {
   onFilesAdded: (filePaths: string[]) => Promise<void>;
@@ -10,6 +13,43 @@ interface ReceiptDropzoneProps {
 export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const dropzoneRef = useRef<HTMLDivElement>(null);
+  const isProcessingRef = useRef(isProcessing);
+
+  useEffect(() => {
+    isProcessingRef.current = isProcessing;
+  }, [isProcessing]);
+
+  useEffect(() => {
+    const webview = getCurrentWebview();
+    const unlistenPromise = webview.onDragDropEvent((event) => {
+      const { payload } = event;
+
+      switch (payload.type) {
+        case "enter":
+          setIsDragging(true);
+          break;
+        case "leave":
+          setIsDragging(false);
+          break;
+        case "drop": {
+          setIsDragging(false);
+          if (isProcessingRef.current) return;
+
+          const supportedFiles = payload.paths.filter((path) =>
+            SUPPORTED_EXTENSIONS.test(path)
+          );
+          if (supportedFiles.length > 0) {
+            onFilesAdded(supportedFiles);
+          }
+          break;
+        }
+      }
+    });
+
+    return () => {
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, [onFilesAdded]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -23,31 +63,11 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback(
-    async (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      if (isProcessing) return;
-
-      const files = Array.from(e.dataTransfer.files);
-      const supportedFiles = files.filter((file) =>
-        /\.(jpe?g|png|pdf)$/i.test(file.name)
-      );
-
-      if (supportedFiles.length > 0) {
-        // Tauri環境ではファイルパスを取得できないので、webkitRelativePathを使用
-        // 実際のTauri環境ではドラッグ&ドロップイベントからパスを取得する
-        const paths = supportedFiles.map((f) => f.name);
-        // Note: Tauri 2 ではD&Dでファイルパスを取得するにはplugin-uploadが必要
-        // 一旦ダイアログで選択する方式を推奨
-        console.log("Dropped files:", paths);
-        alert("ファイルのドラッグ&ドロップは現在ダイアログ経由でのみサポートしています。下のボタンをクリックしてファイルを選択してください。");
-      }
-    },
-    [isProcessing]
-  );
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
 
   const handleSelectFiles = useCallback(async () => {
     if (isProcessing) return;
@@ -106,7 +126,7 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
           <p className="text-sm font-medium text-gray-700">
             {isDragging
               ? "ここにドロップ"
-              : "クリックしてファイルを選択"}
+              : "ファイルをここにドロップ"}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             JPEG, PNG, PDF (複数選択可)
