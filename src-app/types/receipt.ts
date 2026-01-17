@@ -83,3 +83,10 @@ export interface OcrProgressEvent {
   fileName: string;
   result?: OcrResult;
 }
+
+/** ディレクトリ検証結果 */
+export interface DirectoryValidation {
+  exists: boolean;
+  isDirectory: boolean;
+  isWritable: boolean;
+}

@@ -12,7 +12,7 @@ import type {
   ApplicationMonth,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
-import { batchOcrReceipts } from "../services/tauri/commands";
+import { batchOcrReceipts, ensureMonthDirectory } from "../services/tauri/commands";
 import {
   readFileAsBase64,
   getMimeType,
@@ -28,7 +28,7 @@ export interface ReceiptStoreState {
 
 export interface ReceiptStoreActions {
   // 申請月操作
-  createMonth: (yearMonth?: string) => void;
+  createMonth: (yearMonth?: string) => Promise<void>;
   selectMonth: (monthId: string) => void;
   deleteMonth: (monthId: string) => void;
   // レシート操作
@@ -68,26 +68,34 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   }, [months, currentMonthId]);
 
   /** 申請月を作成 */
-  const createMonth = useCallback((yearMonth?: string) => {
+  const createMonth = useCallback(async (yearMonth?: string) => {
     const newYearMonth = yearMonth ?? getCurrentYearMonth();
 
-    setMonths((prev) => {
-      // 同じyearMonthの申請月が既にあればそれを選択
-      const existing = prev.find((m) => m.yearMonth === newYearMonth);
-      if (existing) {
-        setCurrentMonthId(existing.id);
-        return prev;
-      }
+    // 同じyearMonthの申請月が既にあればそれを選択
+    const existing = months.find((m) => m.yearMonth === newYearMonth);
+    if (existing) {
+      setCurrentMonthId(existing.id);
+      return;
+    }
 
-      const newMonth: ApplicationMonth = {
-        id: nanoid(6),
-        yearMonth: newYearMonth,
-        receipts: [],
-      };
-      setCurrentMonthId(newMonth.id);
-      return [...prev, newMonth];
-    });
-  }, []);
+    // Create the physical directory structure
+    try {
+      await ensureMonthDirectory(newYearMonth);
+    } catch (error) {
+      console.error("Failed to create month directory:", error);
+      // Continue with creating the logical month even if directory creation fails
+    }
+
+    // Create new month
+    const newMonth: ApplicationMonth = {
+      id: nanoid(6),
+      yearMonth: newYearMonth,
+      receipts: [],
+    };
+
+    setMonths((prev) => [...prev, newMonth]);
+    setCurrentMonthId(newMonth.id);
+  }, [months]);
 
   /** 申請月を選択 */
   const selectMonth = useCallback((monthId: string) => {

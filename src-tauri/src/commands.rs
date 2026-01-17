@@ -3,10 +3,22 @@
 //! フロントエンドから呼び出されるTauriコマンドを定義する。
 
 use crate::providers::{OcrProgressEvent, OcrProviderRegistry, OcrResult, OcrSettings};
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::PathBuf;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
+
+/// ディレクトリ検証結果
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirectoryValidation {
+    pub exists: bool,
+    pub is_directory: bool,
+    pub is_writable: bool,
+}
 
 /// OCR設定を取得
 #[tauri::command]
@@ -159,4 +171,116 @@ pub async fn batch_ocr_receipts(
     }
 
     Ok(results)
+}
+
+/// デフォルトのルートディレクトリを取得
+#[tauri::command]
+pub async fn get_default_root_directory(app: AppHandle) -> Result<String, String> {
+    let document_dir = app
+        .path()
+        .document_dir()
+        .map_err(|e| format!("ドキュメントディレクトリの取得に失敗しました: {}", e))?;
+
+    let default_path = document_dir.join("Expense");
+    default_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "パスの変換に失敗しました".to_string())
+}
+
+/// ルートディレクトリを取得（保存済みの値またはデフォルト）
+#[tauri::command]
+pub async fn get_root_directory(app: AppHandle) -> Result<String, String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    if let Some(value) = store.get("root_directory") {
+        if let Some(path) = value.as_str() {
+            return Ok(path.to_string());
+        }
+    }
+
+    // 保存されていない場合はデフォルト値を返す
+    get_default_root_directory(app).await
+}
+
+/// ルートディレクトリを保存
+#[tauri::command]
+pub async fn save_root_directory(app: AppHandle, path: String) -> Result<(), String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    store.set("root_directory", serde_json::Value::String(path));
+
+    store
+        .save()
+        .map_err(|e| format!("設定の保存に失敗しました: {}", e))?;
+
+    Ok(())
+}
+
+/// 月別ディレクトリを作成（{root}/YYYY/MM/）
+#[tauri::command]
+pub async fn ensure_month_directory(app: AppHandle, year_month: String) -> Result<String, String> {
+    // YYYYMM形式のバリデーション
+    if year_month.len() != 6 {
+        return Err("年月は YYYYMM 形式で指定してください".to_string());
+    }
+
+    let year = &year_month[0..4];
+    let month = &year_month[4..6];
+
+    // 数値として有効かチェック
+    year.parse::<u32>()
+        .map_err(|_| "年が無効です".to_string())?;
+    let month_num = month
+        .parse::<u32>()
+        .map_err(|_| "月が無効です".to_string())?;
+
+    if !(1..=12).contains(&month_num) {
+        return Err("月は01から12の範囲で指定してください".to_string());
+    }
+
+    let root_directory = get_root_directory(app).await?;
+    let month_path = PathBuf::from(&root_directory).join(year).join(month);
+
+    fs::create_dir_all(&month_path)
+        .map_err(|e| format!("ディレクトリの作成に失敗しました: {}", e))?;
+
+    month_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "パスの変換に失敗しました".to_string())
+}
+
+/// ディレクトリを検証
+#[tauri::command]
+pub async fn validate_directory(path: String) -> Result<DirectoryValidation, String> {
+    let path_buf = PathBuf::from(&path);
+
+    let exists = path_buf.exists();
+    let is_directory = path_buf.is_dir();
+
+    // 書き込み可能かどうかをチェック
+    let is_writable = if is_directory {
+        // ディレクトリに一時ファイルを作成してテスト
+        let test_file = path_buf.join(".torifune_write_test");
+        match fs::write(&test_file, b"test") {
+            Ok(_) => {
+                let _ = fs::remove_file(&test_file);
+                true
+            }
+            Err(_) => false,
+        }
+    } else {
+        false
+    };
+
+    Ok(DirectoryValidation {
+        exists,
+        is_directory,
+        is_writable,
+    })
 }

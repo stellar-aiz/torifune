@@ -22,6 +22,11 @@ pub fn run() {
             commands::get_ocr_settings,
             commands::save_ocr_settings,
             commands::test_provider_connection,
+            commands::get_default_root_directory,
+            commands::get_root_directory,
+            commands::save_root_directory,
+            commands::ensure_month_directory,
+            commands::validate_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

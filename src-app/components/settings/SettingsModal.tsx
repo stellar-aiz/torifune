@@ -1,17 +1,26 @@
 import { useState, useEffect } from "react";
-import { FiX, FiCheck, FiAlertCircle, FiCpu } from "react-icons/fi";
+import { FiX, FiCheck, FiAlertCircle, FiCpu, FiFolder } from "react-icons/fi";
 import { useSettingsStore } from "../../hooks/useSettingsStore";
-import { testProviderConnection } from "../../services/tauri/commands";
-import type { OcrProvider } from "../../types/receipt";
+import {
+  testProviderConnection,
+  getDefaultRootDirectory,
+  getRootDirectory,
+  saveRootDirectory,
+  validateDirectory,
+} from "../../services/tauri/commands";
+import type { OcrProvider, DirectoryValidation } from "../../types/receipt";
+import { FolderSettings } from "./FolderSettings";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-type SettingsTab = "ocr";
+type SettingsTab = "ocr" | "storage";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+  { id: "storage", label: "保存先設定", icon: <FiFolder className="w-4 h-4" /> },
   { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
 ];
 
@@ -23,12 +32,19 @@ const providers: { id: OcrProvider; label: string }[] = [
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const settingsStore = useSettingsStore();
   const [localSettings, setLocalSettings] = useState(settingsStore.settings);
-  const [activeTab, setActiveTab] = useState<SettingsTab>("ocr");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("storage");
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
+
+  // Storage settings state
+  const [rootDirectory, setRootDirectory] = useState<string>("");
+  const [defaultDirectory, setDefaultDirectory] = useState<string>("");
+  const [directoryValidation, setDirectoryValidation] =
+    useState<DirectoryValidation | null>(null);
+  const [storageLoading, setStorageLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,8 +53,34 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     }
   }, [isOpen, settingsStore.settings]);
 
+  // Load storage settings when modal opens
+  useEffect(() => {
+    const loadStorageSettings = async () => {
+      try {
+        setStorageLoading(true);
+        const [root, defaultRoot] = await Promise.all([
+          getRootDirectory(),
+          getDefaultRootDirectory(),
+        ]);
+        setRootDirectory(root);
+        setDefaultDirectory(defaultRoot);
+        // Validate directory
+        const validation = await validateDirectory(root);
+        setDirectoryValidation(validation);
+      } catch (error) {
+        console.error("Failed to load storage settings:", error);
+      } finally {
+        setStorageLoading(false);
+      }
+    };
+    if (isOpen) {
+      loadStorageSettings();
+    }
+  }, [isOpen]);
+
   const handleSave = async () => {
     await settingsStore.saveSettings(localSettings);
+    await saveRootDirectory(rootDirectory);
     onClose();
   };
 
@@ -58,6 +100,33 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const handlePathChange = async (path: string) => {
+    setRootDirectory(path);
+    // Validate the new path
+    try {
+      const validation = await validateDirectory(path);
+      setDirectoryValidation(validation);
+    } catch (error) {
+      setDirectoryValidation(null);
+    }
+  };
+
+  const handleResetPath = () => {
+    handlePathChange(defaultDirectory);
+  };
+
+  const handleBrowse = async () => {
+    const selected = await openDialog({
+      directory: true,
+      multiple: false,
+      title: "保存先フォルダを選択",
+      defaultPath: rootDirectory,
+    });
+    if (selected) {
+      handlePathChange(selected as string);
     }
   };
 
@@ -351,6 +420,18 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                   </button>
                 </div>
               </div>
+            )}
+
+            {activeTab === "storage" && (
+              <FolderSettings
+                rootDirectory={rootDirectory}
+                defaultDirectory={defaultDirectory}
+                validation={directoryValidation}
+                onPathChange={handlePathChange}
+                onReset={handleResetPath}
+                onBrowse={handleBrowse}
+                isLoading={storageLoading}
+              />
             )}
           </div>
         </div>
