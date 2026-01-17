@@ -7,6 +7,7 @@ import {
   getRootDirectory,
   saveRootDirectory,
   validateDirectory,
+  createDirectory,
 } from "../../services/tauri/commands";
 import type { OcrProvider, DirectoryValidation } from "../../types/receipt";
 import { FolderSettings } from "./FolderSettings";
@@ -45,6 +46,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [directoryValidation, setDirectoryValidation] =
     useState<DirectoryValidation | null>(null);
   const [storageLoading, setStorageLoading] = useState(false);
+  const [isCreatingDirectory, setIsCreatingDirectory] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -127,6 +129,20 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     });
     if (selected) {
       handlePathChange(selected as string);
+    }
+  };
+
+  const handleCreateDirectory = async () => {
+    setIsCreatingDirectory(true);
+    try {
+      await createDirectory(rootDirectory);
+      // 作成後に再検証
+      const validation = await validateDirectory(rootDirectory);
+      setDirectoryValidation(validation);
+    } catch (error) {
+      console.error("Failed to create directory:", error);
+    } finally {
+      setIsCreatingDirectory(false);
     }
   };
 
@@ -430,7 +446,9 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 onPathChange={handlePathChange}
                 onReset={handleResetPath}
                 onBrowse={handleBrowse}
+                onCreate={handleCreateDirectory}
                 isLoading={storageLoading}
+                isCreating={isCreatingDirectory}
               />
             )}
           </div>

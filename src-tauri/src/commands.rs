@@ -284,3 +284,14 @@ pub async fn validate_directory(path: String) -> Result<DirectoryValidation, Str
         is_writable,
     })
 }
+
+/// ディレクトリを作成
+#[tauri::command]
+pub async fn create_directory(path: String) -> Result<(), String> {
+    let path_buf = PathBuf::from(&path);
+
+    fs::create_dir_all(&path_buf)
+        .map_err(|e| format!("ディレクトリの作成に失敗しました: {}", e))?;
+
+    Ok(())
+}

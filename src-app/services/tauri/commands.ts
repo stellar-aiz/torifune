@@ -78,3 +78,8 @@ export async function validateDirectory(
 ): Promise<DirectoryValidation> {
   return invoke<DirectoryValidation>("validate_directory", { path });
 }
+
+/** ディレクトリを作成 */
+export async function createDirectory(path: string): Promise<void> {
+  return invoke<void>("create_directory", { path });
+}

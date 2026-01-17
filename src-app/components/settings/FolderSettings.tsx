@@ -2,8 +2,8 @@ import {
   FiFolder,
   FiRefreshCw,
   FiCheck,
-  FiX,
   FiAlertCircle,
+  FiFolderPlus,
 } from "react-icons/fi";
 import type { DirectoryValidation } from "../../types/receipt";
 
@@ -18,14 +18,16 @@ function getValidationErrorMessage(validation: DirectoryValidation): string {
   return "指定されたフォルダに書き込み権限がありません。別のフォルダを選択してください。";
 }
 
-interface StorageSettingsProps {
+interface FolderSettingsProps {
   rootDirectory: string;
   defaultDirectory: string;
   validation: DirectoryValidation | null;
   onPathChange: (path: string) => void;
   onReset: () => void;
   onBrowse: () => void;
+  onCreate: () => void;
   isLoading?: boolean;
+  isCreating?: boolean;
 }
 
 export function FolderSettings({
@@ -35,8 +37,10 @@ export function FolderSettings({
   onPathChange,
   onReset,
   onBrowse,
+  onCreate,
   isLoading = false,
-}: StorageSettingsProps) {
+  isCreating = false,
+}: FolderSettingsProps) {
   const isDefault = rootDirectory === defaultDirectory;
   const isValid =
     validation?.exists && validation?.isDirectory && validation?.isWritable;
@@ -114,38 +118,33 @@ export function FolderSettings({
         )}
       </div>
 
-      {/* バリデーション結果 */}
-      {validation && (
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-600">
-            ディレクトリ検証
-          </h4>
-          <div className="space-y-1">
-            <ValidationItem
-              label="フォルダが存在する"
-              isValid={validation.exists}
-            />
-            <ValidationItem
-              label="ディレクトリである"
-              isValid={validation.isDirectory}
-              disabled={!validation.exists}
-            />
-            <ValidationItem
-              label="書き込み可能"
-              isValid={validation.isWritable}
-              disabled={!validation.exists || !validation.isDirectory}
-            />
-          </div>
-        </div>
-      )}
-
       {/* バリデーションエラーメッセージ */}
       {validation && !isValid && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50">
-          <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-          <span className="text-sm text-red-700">
-            {getValidationErrorMessage(validation)}
-          </span>
+        <div className="space-y-3">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50">
+            <FiAlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+            <span className="text-sm text-red-700">
+              {getValidationErrorMessage(validation)}
+            </span>
+          </div>
+          {/* フォルダが存在しない場合は作成ボタンを表示 */}
+          {!validation.exists && (
+            <button
+              onClick={onCreate}
+              disabled={isLoading || isCreating}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+                ${
+                  isLoading || isCreating
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }
+              `}
+            >
+              <FiFolderPlus className="w-4 h-4" />
+              {isCreating ? "作成中..." : "フォルダを作成"}
+            </button>
+          )}
         </div>
       )}
 
@@ -184,37 +183,3 @@ export function FolderSettings({
   );
 }
 
-/** バリデーション項目コンポーネント */
-function ValidationItem({
-  label,
-  isValid,
-  disabled = false,
-}: {
-  label: string;
-  isValid: boolean;
-  disabled?: boolean;
-}) {
-  if (disabled) {
-    return (
-      <div className="flex items-center gap-2 text-gray-400">
-        <div className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center">
-          <span className="text-xs">-</span>
-        </div>
-        <span className="text-sm">{label}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`flex items-center gap-2 ${isValid ? "text-green-600" : "text-red-600"}`}
-    >
-      {isValid ? (
-        <FiCheck className="w-4 h-4" />
-      ) : (
-        <FiX className="w-4 h-4" />
-      )}
-      <span className="text-sm">{label}</span>
-    </div>
-  );
-}

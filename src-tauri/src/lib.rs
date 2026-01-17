@@ -27,6 +27,7 @@ pub fn run() {
             commands::save_root_directory,
             commands::ensure_month_directory,
             commands::validate_directory,
+            commands::create_directory,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
