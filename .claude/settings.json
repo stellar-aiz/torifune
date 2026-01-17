@@ -6,28 +6,72 @@
     "allow": [
       "WebSearch",
       "mcp__o3__o3-search",
-      "Bash(pnpm build:*)",
-      "Bash(pnpm lint:*)",
-      "Bash(pnpm lint:ts:*)",
-      "Bash(pnpm lint:rust:*)",
-      "Bash(pnpm test:*)",
+      "FileRead",
+      "FileWrite",
+      "ToolSearch",
+
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(cp:*)",
+      "Bash(cat:*)",
+      "Bash(sed:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git push:*)",
+
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+
+      "Bash(pnpm:*)",
       "Bash(cargo check:*)",
       "Bash(cargo clippy:*)",
-      "Bash(ls:*)",
-      "Bash(tree:*)"
-    ]
+      "Bash(cargo build:*)",
+      "Bash(cargo test:*)",
+      "Bash(uv:*)"
+    ],
+    "deny": [
+      "Bash(npm:*)",
+      "Bash(yarn:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+
+      "Bash(git tag:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)"
+    ],
+    "ask": []
   },
   "hooks": {
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Bash(git commit*)",
         "hooks": [
           {
             "type": "command",
-            "command": "pnpm lint"
+            "command": "./scripts/test.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./scripts/format.sh"
           }
         ]
       }
     ]
-  }
+  },
+  "includeCoAuthoredBy": false,
+  "plansDirectory": "./knowledge/plans/claude"
 }
