@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   FiPlus,
   FiSettings,
@@ -9,12 +9,13 @@ import {
 } from "react-icons/fi";
 import type { ApplicationMonth, YearGroup } from "../../types/receipt";
 import { groupByYear } from "../../types/receipt";
+import { CreateMonthModal } from "../month/CreateMonthModal";
 
 interface SidebarProps {
   months: ApplicationMonth[];
   currentMonthId: string | null;
   onSelectMonth: (monthId: string) => void;
-  onCreateMonth: () => void;
+  onCreateMonth: (yearMonth: string) => void;
   onDeleteMonth: (monthId: string) => void;
   onOpenSettings: () => void;
 }
@@ -27,6 +28,9 @@ export function Sidebar({
   onDeleteMonth,
   onOpenSettings,
 }: SidebarProps) {
+  // モーダル表示状態
+  const [isCreateMonthModalOpen, setIsCreateMonthModalOpen] = useState(false);
+
   // 展開されている年を管理
   const [expandedYears, setExpandedYears] = useState<Set<string>>(() => {
     // 初期状態: 現在選択中の月がある年を展開
@@ -44,10 +48,28 @@ export function Sidebar({
     return new Set();
   });
 
+  // 選択された月の年を自動展開
+  useEffect(() => {
+    const currentMonth = months.find((m) => m.id === currentMonthId);
+    if (currentMonth) {
+      const year = currentMonth.yearMonth.slice(0, 4);
+      setExpandedYears((prev) => {
+        if (prev.has(year)) return prev;
+        return new Set([...prev, year]);
+      });
+    }
+  }, [currentMonthId, months]);
+
   // 年グループに変換
   const yearGroups: YearGroup[] = useMemo(
     () => groupByYear(months, expandedYears),
     [months, expandedYears]
+  );
+
+  // 既存のyearMonthリストを計算
+  const existingYearMonths = useMemo(
+    () => months.map((m) => m.yearMonth),
+    [months]
   );
 
   const toggleYear = (year: string) => {
@@ -73,8 +95,8 @@ export function Sidebar({
       {/* 新規申請ボタン */}
       <div className="px-3 py-3">
         <button
-          onClick={onCreateMonth}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          onClick={() => setIsCreateMonthModalOpen(true)}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-transparent hover:bg-blue-600 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-colors"
         >
           <FiPlus className="w-4 h-4" />
           新規申請月
@@ -125,7 +147,7 @@ export function Sidebar({
                                 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors
                                 ${
                                   isActive
-                                    ? "bg-gray-700 text-white"
+                                    ? "bg-yellow-500/20 text-yellow-300 font-medium"
                                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                                 }
                               `}
@@ -138,7 +160,7 @@ export function Sidebar({
                                 <span
                                   className={`
                                     text-xs px-1.5 py-0.5 rounded-full
-                                    ${isActive ? "bg-gray-600" : "bg-gray-700"}
+                                    ${isActive ? "bg-yellow-500/30 text-yellow-200" : "bg-gray-700"}
                                   `}
                                 >
                                   {monthItem.successCount}/{monthItem.receiptCount}
@@ -178,6 +200,14 @@ export function Sidebar({
           設定
         </button>
       </div>
+
+      {/* 新規申請月作成モーダル */}
+      <CreateMonthModal
+        isOpen={isCreateMonthModalOpen}
+        onClose={() => setIsCreateMonthModalOpen(false)}
+        onCreateMonth={onCreateMonth}
+        existingYearMonths={existingYearMonths}
+      />
     </aside>
   );
 }

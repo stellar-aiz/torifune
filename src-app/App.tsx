@@ -19,6 +19,13 @@ function App() {
     setIsSettingsOpen(false);
   }, []);
 
+  const handleCreateMonth = useCallback(
+    (yearMonth: string) => {
+      store.createMonth(yearMonth);
+    },
+    [store]
+  );
+
   // 現在の申請月
   const currentMonth = useMemo(() => {
     return store.months.find((m) => m.id === store.currentMonthId);
@@ -39,7 +46,7 @@ function App() {
         months={store.months}
         currentMonthId={store.currentMonthId}
         onSelectMonth={store.selectMonth}
-        onCreateMonth={store.createMonth}
+        onCreateMonth={handleCreateMonth}
         onDeleteMonth={store.deleteMonth}
         onOpenSettings={handleOpenSettings}
       />
