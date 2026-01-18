@@ -115,20 +115,37 @@ function App() {
                   />
                 </svg>
               </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
-                申請月を選択してください
-              </h3>
-              <p className="text-sm text-gray-500 mb-4">
-                左側のサイドバーから申請月を選択するか、
-                <br />
-                「新規申請月」ボタンで新しい申請を作成してください。
-              </p>
-              <button
-                onClick={() => store.createMonth()}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                今月の申請を作成
-              </button>
+              {store.months.length > 0 ? (
+                // 既存月がある場合
+                <>
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                    申請月を選択してください
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    左側のサイドバーから申請月を選択してください
+                  </p>
+                  <p className="text-sm text-gray-400 mb-4">または</p>
+                  <button
+                    onClick={() => store.createMonth()}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    新規申請月を作成
+                  </button>
+                </>
+              ) : (
+                // 既存月がない場合
+                <>
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">
+                    申請月がまだありません
+                  </h3>
+                  <button
+                    onClick={() => store.createMonth()}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    新規申請月を作成
+                  </button>
+                </>
+              )}
             </div>
           </div>
         )}

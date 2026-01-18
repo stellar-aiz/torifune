@@ -87,11 +87,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         const loadedMonths = await loadApplicationMonths();
         if (loadedMonths.length > 0) {
           setMonths(loadedMonths);
-          // 最新の月を選択
-          const sorted = [...loadedMonths].sort((a, b) =>
-            b.yearMonth.localeCompare(a.yearMonth)
-          );
-          setCurrentMonthId(sorted[0].id);
+          // currentMonthId は null のまま（ユーザーに選択させる）
         }
       } catch (error) {
         console.error("Failed to load application months:", error);
