@@ -2,11 +2,12 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { ReceiptDropzone } from "./components/receipt/ReceiptDropzone";
 import { ReceiptList } from "./components/receipt/ReceiptList";
-import { ExportPanel } from "./components/export/ExportPanel";
+import { ActionBar } from "./components/action/ActionBar";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useReceiptStore } from "./hooks/useReceiptStore";
 import { formatMonthName } from "./types/receipt";
 import { getRootDirectory } from "./services/tauri/commands";
+import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { FaFolderOpen } from "react-icons/fa";
 
@@ -65,6 +66,42 @@ function App() {
     }
   }, [currentMonthPath]);
 
+  // 進捗計算
+  const processingProgress = useMemo(() => {
+    if (!store.isProcessing) return undefined;
+    const total = currentReceipts.length;
+    const completed = currentReceipts.filter(
+      r => r.status === "success" || r.status === "error"
+    ).length;
+    return { completed, total };
+  }, [store.isProcessing, currentReceipts]);
+
+  // OCR実行可否
+  const canStartOcr = useMemo(() => {
+    const pendingCount = currentReceipts.filter(r => r.status === "pending").length;
+    return pendingCount > 0 && !store.isProcessing;
+  }, [currentReceipts, store.isProcessing]);
+
+  // Excel を開くハンドラ
+  const handleOpenExcel = useCallback(async () => {
+    if (!currentMonth) return;
+    await openSummaryExcel(currentReceipts, currentMonth.yearMonth);
+  }, [currentMonth, currentReceipts]);
+
+  // 削除確認付きハンドラ
+  const handleDeleteMonthWithConfirm = useCallback(() => {
+    if (!store.currentMonthId || !currentMonthName) return;
+
+    const confirmed = window.confirm(
+      `「${currentMonthName}」を削除しますか？\n\n` +
+      `この操作はアプリ上のデータのみを削除します。\nファイルシステム上のファイルは削除されません。`
+    );
+
+    if (confirmed) {
+      store.deleteMonth(store.currentMonthId);
+    }
+  }, [store.currentMonthId, currentMonthName, store]);
+
   return (
     <div className="h-screen flex bg-gray-50">
       {/* サイドバー */}
@@ -102,33 +139,29 @@ function App() {
               </div>
             </header>
 
-            {/* コンテンツエリア */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 overflow-hidden">
-              {/* 左側: ドロップゾーンとリスト */}
-              <div className="flex-1 flex flex-col gap-4 min-w-0">
-                <ReceiptDropzone
-                  onFilesAdded={store.addReceipts}
-                  isProcessing={store.isProcessing}
-                />
+            {/* ActionBar - ヘッダー直下 */}
+            <ActionBar
+              canStartOcr={canStartOcr}
+              isProcessing={store.isProcessing}
+              processingProgress={processingProgress}
+              onStartOcr={store.startOcr}
+              onOpenExcel={handleOpenExcel}
+              onDeleteMonth={handleDeleteMonthWithConfirm}
+              canDeleteMonth={!!store.currentMonthId}
+            />
 
-                <div className="flex-1 overflow-auto">
-                  <ReceiptList
-                    receipts={currentReceipts}
-                    yearMonth={currentMonth?.yearMonth ?? ""}
-                    onRemove={store.removeReceipt}
-                    onUpdateReceipt={store.updateReceipt}
-                  />
-                </div>
-              </div>
-
-              {/* 右側: エクスポートパネル */}
-              <div className="w-full lg:w-48 flex-shrink-0">
-                <ExportPanel
+            {/* コンテンツエリア - フルワイド */}
+            <div className="flex-1 flex flex-col gap-4 p-4 overflow-hidden">
+              <ReceiptDropzone
+                onFilesAdded={store.addReceipts}
+                isProcessing={store.isProcessing}
+              />
+              <div className="flex-1 overflow-auto">
+                <ReceiptList
                   receipts={currentReceipts}
                   yearMonth={currentMonth?.yearMonth ?? ""}
-                  isProcessing={store.isProcessing}
-                  onStartOcr={store.startOcr}
-                  onClearAll={store.clearCurrentMonth}
+                  onRemove={store.removeReceipt}
+                  onUpdateReceipt={store.updateReceipt}
                 />
               </div>
             </div>

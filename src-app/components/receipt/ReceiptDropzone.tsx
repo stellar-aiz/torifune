@@ -99,7 +99,7 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        relative border-2 border-dashed rounded-xl p-6 transition-all
+        relative border-2 border-dashed rounded-lg px-4 py-2 transition-all
         ${isDragging
           ? "border-blue-500 bg-blue-50"
           : "border-gray-300 bg-white hover:border-gray-400"
@@ -108,37 +108,37 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
       `}
       onClick={handleSelectFiles}
     >
-      <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex items-center gap-3">
         <div
           className={`
-            p-3 rounded-full
+            p-1.5 rounded-full
             ${isDragging ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}
           `}
         >
           {isDragging ? (
-            <FiFile className="w-8 h-8" />
+            <FiFile className="w-5 h-5" />
           ) : (
-            <FiUploadCloud className="w-8 h-8" />
+            <FiUploadCloud className="w-5 h-5" />
           )}
         </div>
 
         <div>
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-xs font-medium text-gray-700">
             {isDragging
               ? "ここにドロップ"
-              : "ファイルをここにドロップ"}
+              : "ファイルをここにドロップ、またはクリックして選択"}
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-400">
             JPEG, PNG, PDF (複数選択可)
           </p>
         </div>
       </div>
 
       {isProcessing && (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-gray-600">処理中...</span>
+            <div className="w-3.5 h-3.5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs text-gray-600">処理中...</span>
           </div>
         </div>
       )}
