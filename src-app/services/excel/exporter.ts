@@ -73,9 +73,12 @@ function parseIssuesText(issuesText: string): ValidationIssue[] {
 
 /**
  * ExcelファイルからReceiptData配列を読み込む
+ * @param yearMonth 年月 (YYYYMM形式)
+ * @param directoryPath ディレクトリパス（filePathが壊れている場合の復元用）
  */
 export async function loadReceiptsFromExcel(
-  yearMonth: string
+  yearMonth: string,
+  directoryPath?: string
 ): Promise<ReceiptData[] | null> {
   const savePath = await getSummaryExcelPath(yearMonth);
 
@@ -99,7 +102,32 @@ export async function loadReceiptsFromExcel(
     if (rowNumber === 1) return;
 
     const file = String(row.getCell(1).value ?? "");
-    const filePath = String(row.getCell(3).value ?? "");
+    const linkCell = row.getCell(3);
+    const filePathCellValue = linkCell.value;
+    const filePathCellHyperlink = linkCell.hyperlink;
+
+    // ハイパーリンクから取得、またはテキストから取得
+    let filePath: string;
+    if (filePathCellHyperlink && !filePathCellHyperlink.includes("[object Object]")) {
+      filePath = filePathCellHyperlink;
+    } else if (typeof filePathCellValue === "object" && filePathCellValue !== null && "text" in filePathCellValue) {
+      const text = String((filePathCellValue as { text: unknown }).text);
+      if (!text.includes("[object Object]")) {
+        filePath = text;
+      } else {
+        filePath = "";
+      }
+    } else if (linkCell.text && !linkCell.text.includes("[object Object]")) {
+      filePath = linkCell.text;
+    } else {
+      filePath = "";
+    }
+
+    // filePathが壊れている場合、directoryPath + file で復元
+    if ((!filePath || filePath.includes("[object Object]")) && directoryPath && file) {
+      filePath = `${directoryPath}/${file}`;
+    }
+
     const dateValue = row.getCell(4).value;
     const merchantValue = row.getCell(5).value;
     const totalValue = row.getCell(6).value;
@@ -276,11 +304,12 @@ async function generateSummaryExcel(
       console.warn("Failed to add image to Excel:", error);
     }
 
-    // ハイパーリンク設定
+    // ハイパーリンク設定（filePathが文字列であることを保証）
     const linkCell = row.getCell(3);
+    const safeFilePath = typeof receipt.filePath === "string" ? receipt.filePath : String(receipt.filePath ?? "");
     linkCell.value = {
-      text: receipt.filePath,
-      hyperlink: receipt.filePath,
+      text: safeFilePath,
+      hyperlink: safeFilePath,
     };
     linkCell.font = {
       color: { argb: "FF1155CC" },

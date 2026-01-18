@@ -1,5 +1,5 @@
 import type { ReceiptData } from "../../types/receipt";
-import { ReceiptCard } from "./ReceiptCard";
+import { ReceiptTable } from "./ReceiptTable";
 
 interface ReceiptListProps {
   receipts: ReceiptData[];
@@ -18,16 +18,11 @@ export function ReceiptList({ receipts, yearMonth, onRemove, onUpdateReceipt }: 
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {receipts.map((receipt) => (
-        <ReceiptCard
-          key={receipt.id}
-          receipt={receipt}
-          yearMonth={yearMonth}
-          onRemove={() => onRemove(receipt.id)}
-          onUpdate={(updates) => onUpdateReceipt(receipt.id, updates)}
-        />
-      ))}
-    </div>
+    <ReceiptTable
+      receipts={receipts}
+      yearMonth={yearMonth}
+      onRemove={onRemove}
+      onUpdateReceipt={onUpdateReceipt}
+    />
   );
 }

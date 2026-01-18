@@ -43,8 +43,8 @@ export async function loadApplicationMonthReceipts(
   yearMonth: string,
   directoryPath: string
 ): Promise<ReceiptData[]> {
-  // まずExcelから読み込みを試みる
-  const excelReceipts = await loadReceiptsFromExcel(yearMonth);
+  // まずExcelから読み込みを試みる（directoryPathを渡して壊れたパスを復元）
+  const excelReceipts = await loadReceiptsFromExcel(yearMonth, directoryPath);
 
   if (excelReceipts && excelReceipts.length > 0) {
     // Excelからデータが読み込めた場合、サムネイルを読み込む

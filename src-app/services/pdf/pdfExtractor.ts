@@ -153,3 +153,4 @@ async function generateImageThumbnail(
     img.src = url;
   });
 }
+
