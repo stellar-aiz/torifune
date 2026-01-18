@@ -19,7 +19,28 @@ import {
   generateThumbnail,
 } from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
-import { loadApplicationMonths } from "../services/persistence";
+import {
+  loadApplicationMonths,
+  loadApplicationMonthReceipts,
+  saveApplicationMonth,
+} from "../services/persistence";
+
+function debounce<Args extends unknown[]>(
+  fn: (...args: Args) => void,
+  ms: number
+): (...args: Args) => void {
+  let timeoutId: ReturnType<typeof setTimeout>;
+  return (...args: Args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), ms);
+  };
+}
+
+const debouncedSave = debounce((month: ApplicationMonth) => {
+  saveApplicationMonth(month).catch((error) => {
+    console.error("Failed to auto-save application month:", error);
+  });
+}, 500);
 
 export interface ReceiptStoreState {
   months: ApplicationMonth[];
@@ -30,7 +51,7 @@ export interface ReceiptStoreState {
 export interface ReceiptStoreActions {
   // 申請月操作
   createMonth: (yearMonth?: string) => Promise<void>;
-  selectMonth: (monthId: string) => void;
+  selectMonth: (monthId: string) => Promise<void>;
   deleteMonth: (monthId: string) => void;
   // レシート操作
   addReceipts: (filePaths: string[]) => Promise<void>;
@@ -124,10 +145,33 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     setCurrentMonthId(newMonth.id);
   }, [months]);
 
-  /** 申請月を選択 */
-  const selectMonth = useCallback((monthId: string) => {
-    setCurrentMonthId(monthId);
-  }, []);
+  /** 申請月を選択（遅延読み込み対応） */
+  const selectMonth = useCallback(
+    async (monthId: string) => {
+      setCurrentMonthId(monthId);
+
+      const month = months.find((m) => m.id === monthId);
+      if (!month || month.isLoaded) return;
+
+      // 遅延読み込み実行
+      if (month.directoryPath) {
+        try {
+          const receipts = await loadApplicationMonthReceipts(
+            month.yearMonth,
+            month.directoryPath
+          );
+          setMonths((prev) =>
+            prev.map((m) =>
+              m.id === monthId ? { ...m, receipts, isLoaded: true } : m
+            )
+          );
+        } catch (error) {
+          console.error("Failed to load receipts for month:", error);
+        }
+      }
+    },
+    [months]
+  );
 
   /** 申請月を削除 */
   const deleteMonth = useCallback(
@@ -213,8 +257,8 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     (id: string, updates: Partial<ReceiptData>) => {
       if (!currentMonthId) return;
 
-      setMonths((prev) =>
-        prev.map((m) =>
+      setMonths((prev) => {
+        const updated = prev.map((m) =>
           m.id === currentMonthId
             ? {
                 ...m,
@@ -223,8 +267,16 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                 ),
               }
             : m
-        )
-      );
+        );
+
+        // 自動保存をトリガー
+        const currentMonth = updated.find((m) => m.id === currentMonthId);
+        if (currentMonth) {
+          debouncedSave(currentMonth);
+        }
+
+        return updated;
+      });
     },
     [currentMonthId]
   );
@@ -315,8 +367,8 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       await batchOcrReceipts(requests);
 
       // バリデーション実行
-      setMonths((prev) =>
-        prev.map((m) => {
+      setMonths((prev) => {
+        const updated = prev.map((m) => {
           if (m.id !== currentMonthId) return m;
 
           const successReceipts = m.receipts.filter(
@@ -333,8 +385,18 @@ export function useReceiptStore(): UseReceiptStoreReturn {
               return validatedReceipt ?? r;
             }),
           };
-        })
-      );
+        });
+
+        // OCR完了後に自動保存
+        const currentMonth = updated.find((m) => m.id === currentMonthId);
+        if (currentMonth) {
+          saveApplicationMonth(currentMonth).catch((error) => {
+            console.error("Failed to save application month after OCR:", error);
+          });
+        }
+
+        return updated;
+      });
     } catch (error) {
       console.error("OCR processing failed:", error);
 

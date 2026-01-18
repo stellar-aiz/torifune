@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiDownload, FiPlay, FiTrash2, FiCheck } from "react-icons/fi";
 import type { ReceiptData } from "../../types/receipt";
-import { exportToExcel } from "../../services/excel/exporter";
+import { openSummaryExcel, checkSummaryExcelExists } from "../../services/excel/exporter";
 
 interface ExportPanelProps {
   receipts: ReceiptData[];
+  yearMonth: string;
   isProcessing: boolean;
   onStartOcr: () => Promise<void>;
   onClearAll: () => void;
@@ -12,29 +13,36 @@ interface ExportPanelProps {
 
 export function ExportPanel({
   receipts,
+  yearMonth,
   isProcessing,
   onStartOcr,
   onClearAll,
 }: ExportPanelProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const [excelExists, setExcelExists] = useState(false);
 
   const pendingCount = receipts.filter((r) => r.status === "pending").length;
   const processingCount = receipts.filter((r) => r.status === "processing").length;
   const successCount = receipts.filter((r) => r.status === "success").length;
   const errorCount = receipts.filter((r) => r.status === "error").length;
 
-  const canStartOcr = pendingCount > 0 && !isProcessing;
-  const canExport = successCount > 0 && !isProcessing && !isExporting;
+  // サマリーExcelの存在確認
+  useEffect(() => {
+    checkSummaryExcelExists(yearMonth).then(setExcelExists);
+  }, [yearMonth, successCount]);
 
-  const handleExport = async () => {
-    if (!canExport) return;
+  const canStartOcr = pendingCount > 0 && !isProcessing;
+  const canOpenExcel = (excelExists || successCount > 0) && !isProcessing && !isExporting;
+
+  const handleOpenExcel = async () => {
+    if (!canOpenExcel) return;
 
     setIsExporting(true);
     try {
-      await exportToExcel(receipts.filter((r) => r.status === "success"));
+      await openSummaryExcel(receipts, yearMonth);
     } catch (error) {
-      console.error("Export failed:", error);
-      alert(`エクスポートに失敗しました: ${error}`);
+      console.error("Failed to open Excel:", error);
+      alert(`Excelを開けませんでした: ${error}`);
     } finally {
       setIsExporting(false);
     }
@@ -50,25 +58,25 @@ export function ExportPanel({
       <h2 className="text-sm font-semibold text-gray-800 mb-4">処理状況</h2>
 
       {/* ステータスサマリー */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-gray-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-gray-700">{receipts.length}</div>
-          <div className="text-xs text-gray-500">総数</div>
+      <div className="space-y-1 mb-4 text-xs">
+        <div className="flex justify-between text-gray-600">
+          <span>総数</span>
+          <span className="font-medium">{receipts.length}</span>
         </div>
-        <div className="bg-green-50 rounded-lg p-3 text-center">
-          <div className="text-2xl font-bold text-green-600">{successCount}</div>
-          <div className="text-xs text-gray-500">完了</div>
+        <div className="flex justify-between text-green-600">
+          <span>完了</span>
+          <span className="font-medium">{successCount}</span>
         </div>
         {pendingCount > 0 && (
-          <div className="bg-yellow-50 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
-            <div className="text-xs text-gray-500">待機中</div>
+          <div className="flex justify-between text-yellow-600">
+            <span>待機中</span>
+            <span className="font-medium">{pendingCount}</span>
           </div>
         )}
         {errorCount > 0 && (
-          <div className="bg-red-50 rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-red-600">{errorCount}</div>
-            <div className="text-xs text-gray-500">エラー</div>
+          <div className="flex justify-between text-red-600">
+            <span>エラー</span>
+            <span className="font-medium">{errorCount}</span>
           </div>
         )}
       </div>
@@ -111,17 +119,17 @@ export function ExportPanel({
           ) : (
             <>
               <FiPlay className="w-4 h-4" />
-              OCR処理開始 ({pendingCount}件)
+              OCR処理開始
             </>
           )}
         </button>
 
         <button
-          onClick={handleExport}
-          disabled={!canExport}
+          onClick={handleOpenExcel}
+          disabled={!canOpenExcel}
           className={`
             w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors
-            ${canExport
+            ${canOpenExcel
               ? "bg-green-500 text-white hover:bg-green-600"
               : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }
@@ -135,7 +143,7 @@ export function ExportPanel({
           ) : (
             <>
               <FiDownload className="w-4 h-4" />
-              Excelエクスポート
+              Excelを開く
             </>
           )}
         </button>

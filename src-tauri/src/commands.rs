@@ -304,7 +304,7 @@ pub struct MonthDirectoryInfo {
     pub month: String,
     pub year_month: String,
     pub path: String,
-    pub has_summary: bool,
+    pub has_excel: bool,
 }
 
 /// ルートディレクトリ以下の年月ディレクトリ一覧を取得
@@ -366,14 +366,14 @@ pub async fn list_month_directories(app: AppHandle) -> Result<Vec<MonthDirectory
             };
 
             let year_month = format!("{}{:02}", year_name, month_num);
-            let summary_path = month_path.join(format!("{}-summary.json", year_month));
+            let excel_path = month_path.join(format!("{}-summary.xlsx", year_month));
 
             results.push(MonthDirectoryInfo {
                 year: year_name.to_string(),
                 month: month_name.to_string(),
                 year_month,
                 path: month_path.to_str().unwrap_or("").to_string(),
-                has_summary: summary_path.exists(),
+                has_excel: excel_path.exists(),
             });
         }
     }
@@ -382,45 +382,6 @@ pub async fn list_month_directories(app: AppHandle) -> Result<Vec<MonthDirectory
     results.sort_by(|a, b| b.year_month.cmp(&a.year_month));
 
     Ok(results)
-}
-
-/// サマリーJSONを保存
-#[tauri::command]
-pub async fn write_summary_json(
-    app: AppHandle,
-    year_month: String,
-    content: String,
-) -> Result<String, String> {
-    let month_dir = ensure_month_directory(app, year_month.clone()).await?;
-    let file_path = PathBuf::from(&month_dir).join(format!("{}-summary.json", year_month));
-
-    fs::write(&file_path, &content)
-        .map_err(|e| format!("ファイルの書き込みに失敗しました: {}", e))?;
-
-    file_path
-        .to_str()
-        .map(|s| s.to_string())
-        .ok_or_else(|| "パスの変換に失敗しました".to_string())
-}
-
-/// サマリーJSONを読み込み
-#[tauri::command]
-pub async fn read_summary_json(app: AppHandle, year_month: String) -> Result<String, String> {
-    let root_directory = get_root_directory(app).await?;
-    let year = &year_month[0..4];
-    let month = &year_month[4..6];
-
-    let file_path = PathBuf::from(&root_directory)
-        .join(year)
-        .join(month)
-        .join(format!("{}-summary.json", year_month));
-
-    if !file_path.exists() {
-        return Err("サマリーファイルが見つかりません".to_string());
-    }
-
-    fs::read_to_string(&file_path)
-        .map_err(|e| format!("ファイルの読み込みに失敗しました: {}", e))
 }
 
 /// ディレクトリ内のファイル一覧を取得

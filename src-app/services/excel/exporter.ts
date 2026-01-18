@@ -1,13 +1,15 @@
 /**
- * Excelエクスポートサービス
+ * Excelサマリー生成サービス
  * ExcelJS を使用してレシートデータをxlsxファイルに出力する
  */
 
 import ExcelJS from "exceljs";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, readFile } from "@tauri-apps/plugin-fs";
-import type { ReceiptData } from "../../types/receipt";
+import { writeFile, readFile, exists } from "@tauri-apps/plugin-fs";
+import { openPath } from "@tauri-apps/plugin-opener";
+import { nanoid } from "nanoid";
+import type { ReceiptData, ValidationIssue } from "../../types/receipt";
 import { isPdf } from "../pdf/pdfExtractor";
+import { getRootDirectory } from "../tauri/commands";
 
 type SupportedImageExtension = "jpeg" | "png";
 
@@ -22,22 +24,168 @@ function getImageExtension(filePath: string): SupportedImageExtension | undefine
 }
 
 /**
- * レシートデータをExcelファイルにエクスポート
+ * サマリーExcelファイルのパスを取得
  */
-export async function exportToExcel(receipts: ReceiptData[]): Promise<void> {
-  if (receipts.length === 0) {
-    throw new Error("エクスポートするデータがありません");
+async function getSummaryExcelPath(yearMonth: string): Promise<string> {
+  const rootDir = await getRootDirectory();
+  const year = yearMonth.slice(0, 4);
+  const month = yearMonth.slice(4, 6);
+  return `${rootDir}/${year}/${month}/${yearMonth}-summary.xlsx`;
+}
+
+/**
+ * 検証結果テキストをパースしてValidationIssue配列に変換
+ */
+function parseIssuesText(issuesText: string): ValidationIssue[] {
+  if (!issuesText || issuesText.trim() === "") {
+    return [];
   }
 
-  // 保存先を選択
-  const savePath = await save({
-    filters: [{ name: "Excel", extensions: ["xlsx"] }],
-    defaultPath: `receipts_${new Date().toISOString().slice(0, 10)}.xlsx`,
+  const lines = issuesText.split("\n");
+  const issues: ValidationIssue[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const errorMatch = trimmed.match(/^\[E\]\s*(.+)$/);
+    const warningMatch = trimmed.match(/^\[W\]\s*(.+)$/);
+
+    if (errorMatch) {
+      issues.push({
+        field: "date",
+        type: "format",
+        severity: "error",
+        message: errorMatch[1],
+      });
+    } else if (warningMatch) {
+      issues.push({
+        field: "date",
+        type: "format",
+        severity: "warning",
+        message: warningMatch[1],
+      });
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * ExcelファイルからReceiptData配列を読み込む
+ */
+export async function loadReceiptsFromExcel(
+  yearMonth: string
+): Promise<ReceiptData[] | null> {
+  const savePath = await getSummaryExcelPath(yearMonth);
+
+  const fileExists = await exists(savePath);
+  if (!fileExists) {
+    return null;
+  }
+
+  const fileData = await readFile(savePath);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(fileData);
+
+  const sheet = workbook.getWorksheet("Summary");
+  if (!sheet) {
+    return null;
+  }
+
+  const receipts: ReceiptData[] = [];
+
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber === 1) return;
+
+    const file = String(row.getCell(1).value ?? "");
+    const filePath = String(row.getCell(3).value ?? "");
+    const dateValue = row.getCell(4).value;
+    const merchantValue = row.getCell(5).value;
+    const totalValue = row.getCell(6).value;
+    const issuesValue = row.getCell(7).value;
+
+    const date = dateValue ? String(dateValue) : undefined;
+    const merchant = merchantValue ? String(merchantValue) : undefined;
+    const total = totalValue ? Number(totalValue) : undefined;
+    const issuesText = issuesValue ? String(issuesValue) : "";
+    const issues = parseIssuesText(issuesText);
+
+    const hasOcrData = date !== undefined || merchant !== undefined || total !== undefined;
+    const status = hasOcrData ? "success" : "pending";
+
+    receipts.push({
+      id: nanoid(6),
+      file,
+      filePath,
+      date,
+      merchant,
+      total,
+      issues: issues.length > 0 ? issues : undefined,
+      status,
+    });
   });
 
-  if (!savePath) {
-    return; // キャンセルされた
+  return receipts;
+}
+
+/**
+ * サマリーExcelファイルが存在するか確認
+ */
+export async function checkSummaryExcelExists(yearMonth: string): Promise<boolean> {
+  if (!yearMonth) return false;
+  const savePath = await getSummaryExcelPath(yearMonth);
+  return exists(savePath);
+}
+
+/**
+ * レシートデータをExcelファイルに保存（ファイルは開かない）
+ * 自動保存用：全てのレシート（pending含む）を保存
+ */
+export async function saveReceiptsToExcel(
+  receipts: ReceiptData[],
+  yearMonth: string
+): Promise<void> {
+  if (receipts.length === 0) {
+    return;
   }
+  const savePath = await getSummaryExcelPath(yearMonth);
+  await generateSummaryExcel(receipts, savePath);
+}
+
+/**
+ * サマリーExcelを生成/更新して開く
+ * ユーザー操作用：成功レシートのみを保存してファイルを開く
+ */
+export async function openSummaryExcel(
+  receipts: ReceiptData[],
+  yearMonth: string
+): Promise<void> {
+  const savePath = await getSummaryExcelPath(yearMonth);
+
+  // 処理済みのレシートがあれば新規生成
+  const successReceipts = receipts.filter((r) => r.status === "success");
+  if (successReceipts.length > 0) {
+    await saveReceiptsToExcel(successReceipts, yearMonth);
+  } else {
+    // レシートがない場合は既存ファイルを確認
+    const fileExists = await exists(savePath);
+    if (!fileExists) {
+      throw new Error("エクスポートするデータがありません");
+    }
+  }
+
+  // ファイルを開く
+  await openPath(savePath);
+}
+
+/**
+ * サマリーExcelファイルを生成
+ */
+async function generateSummaryExcel(
+  receipts: ReceiptData[],
+  savePath: string
+): Promise<void> {
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Summary");

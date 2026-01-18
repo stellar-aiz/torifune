@@ -90,25 +90,12 @@ export interface MonthDirectoryInfo {
   month: string;
   yearMonth: string;
   path: string;
-  hasSummary: boolean;
+  hasExcel: boolean;
 }
 
 /** ルートディレクトリ以下の年月ディレクトリ一覧を取得 */
 export async function listMonthDirectories(): Promise<MonthDirectoryInfo[]> {
   return invoke<MonthDirectoryInfo[]>("list_month_directories");
-}
-
-/** サマリーJSONを保存 */
-export async function writeSummaryJson(
-  yearMonth: string,
-  content: string
-): Promise<string> {
-  return invoke<string>("write_summary_json", { yearMonth, content });
-}
-
-/** サマリーJSONを読み込み */
-export async function readSummaryJson(yearMonth: string): Promise<string> {
-  return invoke<string>("read_summary_json", { yearMonth });
 }
 
 /** ファイル情報 */

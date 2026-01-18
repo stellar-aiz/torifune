@@ -78,9 +78,10 @@ function App() {
               </div>
 
               {/* 右側: エクスポートパネル */}
-              <div className="w-full lg:w-80 flex-shrink-0">
+              <div className="w-full lg:w-48 flex-shrink-0">
                 <ExportPanel
                   receipts={currentReceipts}
+                  yearMonth={currentMonth?.yearMonth ?? ""}
                   isProcessing={store.isProcessing}
                   onStartOcr={store.startOcr}
                   onClearAll={store.clearCurrentMonth}

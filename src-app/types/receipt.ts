@@ -30,6 +30,7 @@ export interface ApplicationMonth {
   yearMonth: string; // "202501" 形式（ソート・表示用）
   receipts: ReceiptData[];
   directoryPath?: string; // 実際のディレクトリパス
+  isLoaded?: boolean; // 遅延読み込み管理用
 }
 
 /** サイドバー用：月アイテム */
