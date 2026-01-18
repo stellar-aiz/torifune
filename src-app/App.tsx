@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { ReceiptDropzone } from "./components/receipt/ReceiptDropzone";
 import { ReceiptList } from "./components/receipt/ReceiptList";
@@ -6,9 +6,13 @@ import { ExportPanel } from "./components/export/ExportPanel";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { useReceiptStore } from "./hooks/useReceiptStore";
 import { formatMonthName } from "./types/receipt";
+import { getRootDirectory } from "./services/tauri/commands";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { FaFolderOpen } from "react-icons/fa";
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [currentMonthPath, setCurrentMonthPath] = useState<string | null>(null);
   const store = useReceiptStore();
 
   const handleOpenSettings = useCallback(() => {
@@ -39,6 +43,28 @@ function App() {
     ? formatMonthName(currentMonth.yearMonth)
     : null;
 
+  // 現在の申請月のフォルダパスを取得
+  useEffect(() => {
+    if (!currentMonth) {
+      setCurrentMonthPath(null);
+      return;
+    }
+    const fetchPath = async () => {
+      const rootDir = await getRootDirectory();
+      const year = currentMonth.yearMonth.slice(0, 4);
+      const month = currentMonth.yearMonth.slice(4, 6);
+      setCurrentMonthPath(`${rootDir}/${year}/${month}`);
+    };
+    fetchPath();
+  }, [currentMonth]);
+
+  // フォルダを開くハンドラ
+  const handleOpenFolder = useCallback(async () => {
+    if (currentMonthPath) {
+      await revealItemInDir(currentMonthPath);
+    }
+  }, [currentMonthPath]);
+
   return (
     <div className="h-screen flex bg-gray-50">
       {/* サイドバー */}
@@ -57,12 +83,23 @@ function App() {
           <>
             {/* 申請月ヘッダー */}
             <header className="bg-white border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                {currentMonthName}
-              </h2>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {currentReceipts.length}件のレシート
-              </p>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  {currentMonthName}
+                </h2>
+                {currentMonthPath && (
+                  <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                    <span className="font-mono text-xs">{currentMonthPath}</span>
+                    <button
+                      onClick={handleOpenFolder}
+                      className="p-1 hover:bg-gray-100 rounded transition-colors"
+                      title="Finderで開く"
+                    >
+                      <FaFolderOpen className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </header>
 
             {/* コンテンツエリア */}
