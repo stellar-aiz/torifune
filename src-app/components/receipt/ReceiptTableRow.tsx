@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { ask } from "@tauri-apps/plugin-dialog";
 import {
-  FiX,
+  FiTrash2,
   FiCheckCircle,
   FiAlertCircle,
   FiClock,
@@ -91,6 +92,18 @@ export function ReceiptTableRow({
   const handleAmountSave = (newValue: string) => {
     onUpdate({ amount: newValue ? parseFloat(newValue) : undefined });
   };
+
+  const handleRemoveClick = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const confirmed = await ask(`「${receipt.file}」を削除しますか？`, {
+      title: "削除の確認",
+      kind: "warning",
+    });
+    if (confirmed) {
+      onRemove();
+    }
+  }, [receipt.file, onRemove]);
 
   // Validation column content
   const renderValidationColumn = () => {
@@ -195,11 +208,11 @@ export function ReceiptTableRow({
       {/* Actions */}
       <td className="min-w-[50px] px-3 py-2 text-center">
         <button
-          onClick={onRemove}
+          onClick={handleRemoveClick}
           className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-          title="Delete"
+          title="削除"
         >
-          <FiX className="w-4 h-4" />
+          <FiTrash2 className="w-4 h-4" />
         </button>
       </td>
     </tr>

@@ -9,6 +9,7 @@ import { formatMonthName } from "./types/receipt";
 import { getRootDirectory } from "./services/tauri/commands";
 import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { ask } from "@tauri-apps/plugin-dialog";
 import { FaFolderOpen } from "react-icons/fa";
 
 function App() {
@@ -89,12 +90,13 @@ function App() {
   }, [currentMonth, currentReceipts]);
 
   // 削除確認付きハンドラ
-  const handleDeleteMonthWithConfirm = useCallback(() => {
+  const handleDeleteMonthWithConfirm = useCallback(async () => {
     if (!store.currentMonthId || !currentMonthName) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await ask(
       `「${currentMonthName}」を削除しますか？\n\n` +
-      `この操作はアプリ上のデータのみを削除します。\nファイルシステム上のファイルは削除されません。`
+      `この操作はアプリ上のデータのみを削除します。\nファイルシステム上のファイルは削除されません。`,
+      { title: "削除の確認", kind: "warning" }
     );
 
     if (confirmed) {
