@@ -18,6 +18,7 @@ export interface ReceiptData {
   merchant?: string;
   date?: string; // YYYY-MM-DD
   amount?: number;
+  currency?: string; // "JPY", "USD" など
   issues?: ValidationIssue[];
   status: "pending" | "processing" | "success" | "error";
   errorMessage?: string;
@@ -90,6 +91,7 @@ export interface OcrResult {
     merchant?: string;
     date?: string;
     amount?: number;
+    currency?: string;
   };
   error?: string;
 }

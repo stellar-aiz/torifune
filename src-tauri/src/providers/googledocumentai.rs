@@ -65,7 +65,9 @@ struct DocumentAiNormalizedValue {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct DocumentAiMoneyValue {
+    currency_code: Option<String>,
     units: Option<String>,
     nanos: Option<i64>,
 }
@@ -182,8 +184,8 @@ impl GoogleDocumentAiProvider {
         entity.mention_text.clone()
     }
 
-    /// エンティティから金額を解決
-    fn resolve_total(entity: &DocumentAiEntity) -> Option<f64> {
+    /// エンティティから金額と通貨コードを解決
+    fn resolve_amount(entity: &DocumentAiEntity) -> (Option<f64>, Option<String>) {
         if let Some(ref normalized) = entity.normalized_value {
             if let Some(ref money) = normalized.money_value {
                 let units: f64 = money
@@ -192,11 +194,12 @@ impl GoogleDocumentAiProvider {
                     .and_then(|s| s.parse().ok())
                     .unwrap_or(0.0);
                 let nanos: f64 = money.nanos.unwrap_or(0) as f64 / 1_000_000_000.0;
-                return Some(units + nanos);
+                let currency = money.currency_code.clone();
+                return (Some(units + nanos), currency);
             }
             if let Some(ref text) = normalized.text {
                 if let Ok(value) = text.parse::<f64>() {
-                    return Some(value);
+                    return (Some(value), None);
                 }
             }
         }
@@ -204,20 +207,21 @@ impl GoogleDocumentAiProvider {
         if let Some(ref mention) = entity.mention_text {
             let digits: String = mention.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
             if let Ok(value) = digits.parse::<f64>() {
-                return Some(value);
+                return (Some(value), None);
             }
         }
 
         // プロパティ内を再帰的に検索
         if let Some(ref properties) = entity.properties {
             for prop in properties {
-                if let Some(value) = Self::resolve_total(prop) {
-                    return Some(value);
+                let (amount, currency) = Self::resolve_amount(prop);
+                if amount.is_some() {
+                    return (amount, currency);
                 }
             }
         }
 
-        None
+        (None, None)
     }
 }
 
@@ -344,7 +348,9 @@ impl OcrProvider for GoogleDocumentAiProvider {
                     &entities,
                     &["total_amount", "invoice_total", "receipt_total"],
                 ) {
-                    receipt_data.amount = Self::resolve_total(total_entity);
+                    let (amount, currency) = Self::resolve_amount(total_entity);
+                    receipt_data.amount = amount;
+                    receipt_data.currency = currency;
                 }
             }
         }

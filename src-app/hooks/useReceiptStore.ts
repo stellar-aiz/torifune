@@ -360,6 +360,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                             merchant: result.data.merchant,
                             date: result.data.date,
                             amount: result.data.amount,
+                            currency: result.data.currency,
                           };
                         } else {
                           return {

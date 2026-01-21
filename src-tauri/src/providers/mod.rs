@@ -35,6 +35,8 @@ pub struct ReceiptData {
     pub date: Option<String>,
     /// 合計金額
     pub amount: Option<f64>,
+    /// 通貨コード（JPY, USD など）
+    pub currency: Option<String>,
 }
 
 impl ReceiptData {
@@ -44,6 +46,7 @@ impl ReceiptData {
             merchant: None,
             date: None,
             amount: None,
+            currency: None,
         }
     }
 }
