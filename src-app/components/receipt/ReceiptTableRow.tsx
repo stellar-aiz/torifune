@@ -71,7 +71,11 @@ export function ReceiptTableRow({
       case "success":
         return <FiCheckCircle className="w-4 h-4 text-green-500" />;
       case "error":
-        return <FiAlertCircle className="w-4 h-4 text-red-500" />;
+        return (
+          <Tooltip content={receipt.errorMessage ?? "OCRエラー"} position="top">
+            <FiAlertCircle className="w-4 h-4 text-red-500" />
+          </Tooltip>
+        );
     }
   };
 
