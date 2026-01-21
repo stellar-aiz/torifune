@@ -67,16 +67,16 @@ function validateDateRange(
 }
 
 /** 金額の小数点バリデーション */
-function validateTotalDecimal(total: number | undefined): ValidationIssue | null {
-  if (total === undefined) return null;
+function validateAmountDecimal(amount: number | undefined): ValidationIssue | null {
+  if (amount === undefined) return null;
 
   // 小数点を含む場合は警告（円建てでは通常整数）
-  if (!Number.isInteger(total)) {
+  if (!Number.isInteger(amount)) {
     return {
-      field: "total",
+      field: "amount",
       type: "format",
       severity: "warning",
-      message: `金額に小数点が含まれています: ${total} (外貨の可能性)`,
+      message: `金額に小数点が含まれています: ${amount} (外貨の可能性)`,
     };
   }
 
@@ -107,27 +107,27 @@ function calculateOutlierThresholds(totals: number[]): {
 }
 
 /** 金額外れ値のバリデーション */
-function validateTotalOutlier(
-  total: number | undefined,
+function validateAmountOutlier(
+  amount: number | undefined,
   thresholds: { lowerBound: number; upperBound: number }
 ): ValidationIssue | null {
-  if (total === undefined) return null;
+  if (amount === undefined) return null;
 
-  if (total < thresholds.lowerBound) {
+  if (amount < thresholds.lowerBound) {
     return {
-      field: "total",
+      field: "amount",
       type: "outlier",
       severity: "warning",
-      message: `金額が極端に低いです: \u00A5${total.toLocaleString()}`,
+      message: `金額が極端に低いです: \u00A5${amount.toLocaleString()}`,
     };
   }
 
-  if (total > thresholds.upperBound) {
+  if (amount > thresholds.upperBound) {
     return {
-      field: "total",
+      field: "amount",
       type: "outlier",
       severity: "warning",
-      message: `金額が極端に高いです: \u00A5${total.toLocaleString()}`,
+      message: `金額が極端に高いです: \u00A5${amount.toLocaleString()}`,
     };
   }
 
@@ -169,15 +169,15 @@ export function validateReceipt(
   }
 
   // 金額バリデーション
-  const decimalIssue = validateTotalDecimal(receipt.total);
+  const decimalIssue = validateAmountDecimal(receipt.amount);
   if (decimalIssue) issues.push(decimalIssue);
 
   // 外れ値検出
-  const totals = context.allResults
-    .map((r) => r.total)
+  const amounts = context.allResults
+    .map((r) => r.amount)
     .filter((t): t is number => t !== undefined);
-  const thresholds = calculateOutlierThresholds(totals);
-  const outlierIssue = validateTotalOutlier(receipt.total, thresholds);
+  const thresholds = calculateOutlierThresholds(amounts);
+  const outlierIssue = validateAmountOutlier(receipt.amount, thresholds);
   if (outlierIssue) issues.push(outlierIssue);
 
   // 店舗名バリデーション

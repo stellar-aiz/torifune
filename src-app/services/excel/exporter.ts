@@ -130,16 +130,16 @@ export async function loadReceiptsFromExcel(
 
     const dateValue = row.getCell(4).value;
     const merchantValue = row.getCell(5).value;
-    const totalValue = row.getCell(6).value;
+    const amountValue = row.getCell(6).value;
     const issuesValue = row.getCell(7).value;
 
     const date = dateValue ? String(dateValue) : undefined;
     const merchant = merchantValue ? String(merchantValue) : undefined;
-    const total = totalValue ? Number(totalValue) : undefined;
+    const amount = amountValue ? Number(amountValue) : undefined;
     const issuesText = issuesValue ? String(issuesValue) : "";
     const issues = parseIssuesText(issuesText);
 
-    const hasOcrData = date !== undefined || merchant !== undefined || total !== undefined;
+    const hasOcrData = date !== undefined || merchant !== undefined || amount !== undefined;
     const status = hasOcrData ? "success" : "pending";
 
     receipts.push({
@@ -148,7 +148,7 @@ export async function loadReceiptsFromExcel(
       filePath,
       date,
       merchant,
-      total,
+      amount,
       issues: issues.length > 0 ? issues : undefined,
       status,
     });
@@ -225,7 +225,7 @@ async function generateSummaryExcel(
     { header: "元ファイルへのリンク", key: "link", width: 40 },
     { header: "日付", key: "date", width: 18 },
     { header: "店舗", key: "merchant", width: 28 },
-    { header: "合計", key: "total", width: 14 },
+    { header: "合計", key: "amount", width: 14 },
     { header: "検証結果", key: "issues", width: 40 },
   ];
 
@@ -249,7 +249,7 @@ async function generateSummaryExcel(
       link: receipt.filePath,
       date: receipt.date ?? "",
       merchant: receipt.merchant ?? "",
-      total: receipt.total ?? null,
+      amount: receipt.amount ?? null,
       issues: issuesText,
     });
 

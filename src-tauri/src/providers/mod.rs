@@ -34,7 +34,7 @@ pub struct ReceiptData {
     /// 日付（YYYY-MM-DD形式）
     pub date: Option<String>,
     /// 合計金額
-    pub total: Option<f64>,
+    pub amount: Option<f64>,
 }
 
 impl ReceiptData {
@@ -43,7 +43,7 @@ impl ReceiptData {
             file,
             merchant: None,
             date: None,
-            total: None,
+            amount: None,
         }
     }
 }

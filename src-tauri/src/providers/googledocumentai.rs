@@ -344,7 +344,7 @@ impl OcrProvider for GoogleDocumentAiProvider {
                     &entities,
                     &["total_amount", "invoice_total", "receipt_total"],
                 ) {
-                    receipt_data.total = Self::resolve_total(total_entity);
+                    receipt_data.amount = Self::resolve_total(total_entity);
                 }
             }
         }

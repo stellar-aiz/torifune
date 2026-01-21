@@ -127,7 +127,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       if (bVal == null) return -1;
 
       let comparison = 0;
-      if (field === "total") {
+      if (field === "amount") {
         comparison = (aVal as number) - (bVal as number);
       } else {
         comparison = String(aVal).localeCompare(String(bVal));
@@ -359,7 +359,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                             status: "success" as const,
                             merchant: result.data.merchant,
                             date: result.data.date,
-                            total: result.data.total,
+                            amount: result.data.amount,
                           };
                         } else {
                           return {

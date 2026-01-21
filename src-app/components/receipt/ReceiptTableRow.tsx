@@ -79,12 +79,6 @@ export function ReceiptTableRow({
   const hasErrors = receipt.issues?.some((i) => i.severity === "error");
   const hasWarnings = receipt.issues?.some((i) => i.severity === "warning");
 
-  // Format currency
-  const formatCurrency = (value?: number): string => {
-    if (value == null) return "";
-    return `\u00A5${value.toLocaleString()}`;
-  };
-
   // Handle save for each field
   const handleDateSave = (newValue: string) => {
     onUpdate({ date: newValue || undefined });
@@ -94,8 +88,8 @@ export function ReceiptTableRow({
     onUpdate({ merchant: newValue || undefined });
   };
 
-  const handleTotalSave = (newValue: string) => {
-    onUpdate({ total: newValue ? parseFloat(newValue) : undefined });
+  const handleAmountSave = (newValue: string) => {
+    onUpdate({ amount: newValue ? parseFloat(newValue) : undefined });
   };
 
   // Validation column content
@@ -146,7 +140,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Thumbnail */}
-      <td className="min-w-[50px] px-3 py-2">
+      <td className="w-fit px-3 py-2">
         <ThumbnailPreview
           src={receipt.thumbnailDataUrl}
           alt={receipt.file}
@@ -176,20 +170,20 @@ export function ReceiptTableRow({
         />
       </td>
 
-      {/* Total */}
+      {/* Currency */}
+      <td className="w-fit">
+        <span className="text-right">¥</span>
+      </td>
+
+      {/* Ammount */}
       <td className="min-w-[100px] px-3 py-2">
         <EditableCell
-          value={receipt.total?.toString() ?? ""}
+          value={receipt.amount?.toString() ?? ""}
           type="number"
           placeholder="-"
-          onChange={handleTotalSave}
+          onChange={handleAmountSave}
           className="text-right"
         />
-        {receipt.total != null && (
-          <div className="text-xs text-gray-500 text-right">
-            {formatCurrency(receipt.total)}
-          </div>
-        )}
       </td>
 
       {/* Validation */}

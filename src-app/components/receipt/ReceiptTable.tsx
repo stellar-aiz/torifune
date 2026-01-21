@@ -34,11 +34,11 @@ export function ReceiptTable({
       <table className="w-full border-collapse min-w-[750px]">
         <thead>
           <tr className="bg-gray-100 border-b border-gray-200 sticky top-0">
-            <th className="min-w-[200px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               ファイル名
             </th>
-            <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
-              サムネイル
+            <th className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+              {/* サムネイル */}
             </th>
             <th
               className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
@@ -55,17 +55,22 @@ export function ReceiptTable({
               <SortIndicator field="merchant" />
             </th>
             <th
-              className="min-w-[100px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
-              onClick={() => onToggleSort("total")}
+              className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer select-none"
             >
-              合計
-              <SortIndicator field="total" />
+              {/* 単位 */}
+            </th>
+            <th
+              className="min-w-[100px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              onClick={() => onToggleSort("amount")}
+            >
+              金額
+              <SortIndicator field="amount" />
             </th>
             <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               検証
             </th>
             <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
-              操作
+              {/* 操作 */}
             </th>
           </tr>
         </thead>
@@ -80,6 +85,9 @@ export function ReceiptTable({
             />
           ))}
         </tbody>
+        <tfoot>
+          {/* TODO: Total (sum) */}
+        </tfoot>
       </table>
     </div>
   );

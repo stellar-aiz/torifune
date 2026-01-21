@@ -4,7 +4,7 @@
 
 /** バリデーションイシュー */
 export interface ValidationIssue {
-  field: "date" | "total" | "merchant";
+  field: "date" | "amount" | "merchant";
   type: "format" | "range" | "outlier";
   severity: "warning" | "error";
   message: string;
@@ -17,7 +17,7 @@ export interface ReceiptData {
   filePath: string;
   merchant?: string;
   date?: string; // YYYY-MM-DD
-  total?: number;
+  amount?: number;
   issues?: ValidationIssue[];
   status: "pending" | "processing" | "success" | "error";
   errorMessage?: string;
@@ -89,7 +89,7 @@ export interface OcrResult {
     file: string;
     merchant?: string;
     date?: string;
-    total?: number;
+    amount?: number;
   };
   error?: string;
 }
@@ -150,7 +150,7 @@ export function groupByYear(
 }
 
 /** ソート可能なフィールド */
-export type SortField = "date" | "total" | "merchant";
+export type SortField = "date" | "amount" | "merchant";
 
 /** ソート順序 */
 export type SortOrder = "asc" | "desc";
