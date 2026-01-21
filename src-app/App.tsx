@@ -158,10 +158,12 @@ function App() {
               />
               <div className="flex-1 overflow-auto">
                 <ReceiptList
-                  receipts={currentReceipts}
+                  receipts={store.sortedReceipts}
                   yearMonth={currentMonth?.yearMonth ?? ""}
                   onRemove={store.removeReceipt}
                   onUpdateReceipt={store.updateReceipt}
+                  sortConfig={store.sortConfig}
+                  onToggleSort={store.toggleSort}
                 />
               </div>
             </div>

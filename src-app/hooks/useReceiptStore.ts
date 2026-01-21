@@ -10,6 +10,8 @@ import type {
   ReceiptData,
   OcrProgressEvent,
   ApplicationMonth,
+  SortConfig,
+  SortField,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
 import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail } from "../services/tauri/commands";
@@ -46,6 +48,8 @@ export interface ReceiptStoreState {
   months: ApplicationMonth[];
   currentMonthId: string | null;
   isProcessing: boolean;
+  sortConfig: SortConfig;
+  sortedReceipts: ReceiptData[];
 }
 
 export interface ReceiptStoreActions {
@@ -60,6 +64,8 @@ export interface ReceiptStoreActions {
   // OCR操作
   startOcr: () => Promise<void>;
   clearCurrentMonth: () => void;
+  // ソート操作
+  toggleSort: (field: SortField) => void;
 }
 
 export type UseReceiptStoreReturn = ReceiptStoreState & ReceiptStoreActions;
@@ -77,6 +83,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: null, order: "asc" });
 
   // 起動時に既存のディレクトリから申請月を読み込む
   useEffect(() => {
@@ -104,6 +111,31 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     const month = getCurrentMonth(months, currentMonthId);
     return month?.receipts ?? [];
   }, [months, currentMonthId]);
+
+  /** ソート済みレシート一覧 */
+  const sortedReceipts = useMemo(() => {
+    if (!sortConfig.field) return currentReceipts;
+
+    return [...currentReceipts].sort((a, b) => {
+      const field = sortConfig.field!;
+      const aVal = a[field];
+      const bVal = b[field];
+
+      // nullish は末尾に
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+
+      let comparison = 0;
+      if (field === "total") {
+        comparison = (aVal as number) - (bVal as number);
+      } else {
+        comparison = String(aVal).localeCompare(String(bVal));
+      }
+
+      return sortConfig.order === "asc" ? comparison : -comparison;
+    });
+  }, [currentReceipts, sortConfig]);
 
   /** 現在の申請月のyearMonth */
   const currentYearMonth = useMemo(() => {
@@ -432,10 +464,25 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     );
   }, [currentMonthId]);
 
+  /** ソートをトグル */
+  const toggleSort = useCallback((field: SortField) => {
+    setSortConfig((prev) => {
+      if (prev.field === field) {
+        // 同じフィールド: 昇順 → 降順 → ソートなし のトグル
+        if (prev.order === "asc") return { field, order: "desc" };
+        return { field: null, order: "asc" };
+      }
+      // 新しいフィールド: 昇順から開始
+      return { field, order: "asc" };
+    });
+  }, []);
+
   return {
     months,
     currentMonthId,
     isProcessing,
+    sortConfig,
+    sortedReceipts,
     createMonth,
     selectMonth,
     deleteMonth,
@@ -444,5 +491,6 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     updateReceipt,
     startOcr,
     clearCurrentMonth,
+    toggleSort,
   };
 }

@@ -148,3 +148,15 @@ export function groupByYear(
   result.sort((a, b) => b.year.localeCompare(a.year)); // 降順
   return result;
 }
+
+/** ソート可能なフィールド */
+export type SortField = "date" | "total" | "merchant";
+
+/** ソート順序 */
+export type SortOrder = "asc" | "desc";
+
+/** ソート設定 */
+export interface SortConfig {
+  field: SortField | null;
+  order: SortOrder;
+}
