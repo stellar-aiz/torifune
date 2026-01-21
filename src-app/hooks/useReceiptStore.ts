@@ -340,10 +340,11 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     let unlisten: UnlistenFn | undefined;
     try {
       unlisten = await listen<OcrProgressEvent>("ocr-progress", (event) => {
-        const { current, result } = event.payload;
+        const { fileName, result } = event.payload;
 
         if (result) {
-          const targetReceipt = pendingReceipts[current];
+          // fileName でマッチング（並列処理対応）
+          const targetReceipt = pendingReceipts.find((r) => r.file === fileName);
           if (targetReceipt) {
             setMonths((prev) =>
               prev.map((m) =>

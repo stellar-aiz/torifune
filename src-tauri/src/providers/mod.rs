@@ -85,7 +85,7 @@ impl OcrResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OcrProgressEvent {
-    /// 現在のインデックス（0始まり）
+    /// 完了数
     pub current: usize,
     /// 総数
     pub total: usize,

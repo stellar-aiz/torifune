@@ -3,13 +3,15 @@
 //! フロントエンドから呼び出されるTauriコマンドを定義する。
 
 use crate::providers::{OcrProgressEvent, OcrProviderRegistry, OcrResult, OcrSettings};
+use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Semaphore};
 
 /// ディレクトリ検証結果
 #[derive(Serialize, Deserialize)]
@@ -105,70 +107,93 @@ pub struct OcrRequest {
     pub mime_type: String,
 }
 
-/// バッチOCR処理
+/// 並列処理の最大同時実行数
+const MAX_CONCURRENT_OCR: usize = 3;
+
+/// バッチOCR処理（並列実行）
 #[tauri::command]
 pub async fn batch_ocr_receipts(
     app: AppHandle,
     registry: State<'_, Arc<Mutex<OcrProviderRegistry>>>,
     requests: Vec<OcrRequest>,
 ) -> Result<Vec<OcrResult>, String> {
-    let settings = get_ocr_settings(app.clone()).await?;
+    let settings = Arc::new(get_ocr_settings(app.clone()).await?);
     let registry_guard = registry.lock().await;
 
-    let provider = registry_guard
-        .get_default_provider()
-        .ok_or("OCRプロバイダーが見つかりません")?
-        .clone();
+    let provider = Arc::new(
+        registry_guard
+            .get_default_provider()
+            .ok_or("OCRプロバイダーが見つかりません")?
+            .clone(),
+    );
 
     drop(registry_guard);
 
     let total = requests.len();
-    let mut results = Vec::with_capacity(total);
+    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_OCR));
+    let completed_count = Arc::new(AtomicUsize::new(0));
 
-    for (index, request) in requests.into_iter().enumerate() {
-        let file_name = std::path::Path::new(&request.file_path)
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or(&request.file_path)
-            .to_string();
+    // 各リクエストを並列タスクとして生成
+    let tasks: Vec<_> = requests
+        .into_iter()
+        .enumerate()
+        .map(|(index, request)| {
+            let app = app.clone();
+            let provider = Arc::clone(&provider);
+            let settings = Arc::clone(&settings);
+            let semaphore = Arc::clone(&semaphore);
+            let completed_count = Arc::clone(&completed_count);
 
-        // 進捗イベントを発火（処理開始）
-        let _ = app.emit(
-            "ocr-progress",
-            OcrProgressEvent {
-                current: index,
-                total,
-                file_name: file_name.clone(),
-                result: None,
-            },
-        );
+            async move {
+                let file_name = std::path::Path::new(&request.file_path)
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(&request.file_path)
+                    .to_string();
 
-        let result = match provider
-            .extract_receipt(
-                &request.file_path,
-                &request.file_content,
-                &request.mime_type,
-                &settings,
-            )
-            .await
-        {
-            Ok(data) => OcrResult::success(data),
-            Err(e) => OcrResult::failure(e),
-        };
+                // セマフォでガード（3並列に制限）
+                let _permit = semaphore.acquire().await.unwrap();
 
-        // 進捗イベントを発火（処理完了）
-        let _ = app.emit(
-            "ocr-progress",
-            OcrProgressEvent {
-                current: index,
-                total,
-                file_name,
-                result: Some(result.clone()),
-            },
-        );
+                let result = match provider
+                    .extract_receipt(
+                        &request.file_path,
+                        &request.file_content,
+                        &request.mime_type,
+                        &settings,
+                    )
+                    .await
+                {
+                    Ok(data) => OcrResult::success(data),
+                    Err(e) => OcrResult::failure(e),
+                };
 
-        results.push(result);
-    }
+                // 完了数をインクリメント
+                let completed = completed_count.fetch_add(1, Ordering::SeqCst) + 1;
+
+                // 進捗イベントを発火（処理完了）
+                let _ = app.emit(
+                    "ocr-progress",
+                    OcrProgressEvent {
+                        current: completed,
+                        total,
+                        file_name,
+                        result: Some(result.clone()),
+                    },
+                );
+
+                (index, result)
+            }
+        })
+        .collect();
+
+    // 全タスクを並列実行
+    let mut indexed_results = join_all(tasks).await;
+
+    // 元のインデックス順にソート
+    indexed_results.sort_by_key(|(index, _)| *index);
+
+    // 結果のみを抽出
+    let results = indexed_results.into_iter().map(|(_, result)| result).collect();
 
     Ok(results)
 }
