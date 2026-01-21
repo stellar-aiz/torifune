@@ -170,10 +170,6 @@ export function ReceiptTableRow({
         />
       </td>
 
-      {/* Currency */}
-      <td className="w-fit">
-        <span className="text-right">{receipt.currency ?? "JPY"}</span>
-      </td>
 
       {/* Ammount */}
       <td className="min-w-[100px] px-3 py-2">
@@ -184,6 +180,11 @@ export function ReceiptTableRow({
           onChange={handleAmountSave}
           className="text-right"
         />
+      </td>
+
+      {/* Currency */}
+      <td className="w-fit">
+        <span className="text-sm">{receipt.currency ?? "JPY"}</span>
       </td>
 
       {/* Validation */}

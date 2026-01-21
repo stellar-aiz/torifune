@@ -55,16 +55,16 @@ export function ReceiptTable({
               <SortIndicator field="merchant" />
             </th>
             <th
-              className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer select-none"
-            >
-              {/* 単位 */}
-            </th>
-            <th
-              className="min-w-[100px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[100px] px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("amount")}
             >
               金額
               <SortIndicator field="amount" />
+            </th>
+            <th
+              className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer select-none"
+            >
+              {/* 単位 */}
             </th>
             <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               検証
