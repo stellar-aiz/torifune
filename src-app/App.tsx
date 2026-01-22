@@ -11,6 +11,7 @@ import { getRootDirectory, moveToTrash } from "./services/tauri/commands";
 import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { FaFolderOpen } from "react-icons/fa";
+import { Toast } from "./components/common/Toast";
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -18,6 +19,7 @@ function App() {
   const [currentMonthPath, setCurrentMonthPath] = useState<string | null>(null);
   const [pendingDeleteMonthId, setPendingDeleteMonthId] = useState<string | null>(null);
   const store = useReceiptStore();
+  const [toast, setToast] = useState<{ message: string; type: "success" | "warning" | "info" } | null>(null);
 
   const handleOpenSettings = useCallback(() => {
     setIsSettingsOpen(true);
@@ -85,11 +87,30 @@ function App() {
     return pendingCount > 0 && !store.isProcessing;
   }, [currentReceipts, store.isProcessing]);
 
+  // 検証実行可否（レシートがあれば可能）
+  const canValidate = useMemo(() => {
+    return currentReceipts.length > 0 && !store.isProcessing;
+  }, [currentReceipts, store.isProcessing]);
+
   // Excel を開くハンドラ
   const handleOpenExcel = useCallback(async () => {
     if (!currentMonth) return;
     await openSummaryExcel(currentReceipts, currentMonth.yearMonth);
   }, [currentMonth, currentReceipts]);
+
+  // データ検証ハンドラ
+  const handleValidate = useCallback(() => {
+    const { warningCount, errorCount } = store.validateReceipts();
+    const totalIssues = warningCount + errorCount;
+
+    if (totalIssues === 0) {
+      setToast({ message: "検証完了: 問題は見つかりませんでした", type: "success" });
+    } else if (errorCount > 0) {
+      setToast({ message: `検証完了: ${errorCount}件のエラー、${warningCount}件の警告`, type: "warning" });
+    } else {
+      setToast({ message: `検証完了: ${warningCount}件の警告`, type: "warning" });
+    }
+  }, [store]);
 
   // 削除リクエストハンドラ（サイドバー・ActionBar共通）
   const handleRequestDeleteMonth = useCallback((monthId: string) => {
@@ -171,6 +192,8 @@ function App() {
               onOpenExcel={handleOpenExcel}
               onDeleteMonth={() => handleRequestDeleteMonth(store.currentMonthId!)}
               canDeleteMonth={!!store.currentMonthId}
+              onValidate={handleValidate}
+              canValidate={canValidate}
             />
 
             {/* コンテンツエリア - フルワイド */}
@@ -256,6 +279,13 @@ function App() {
         onConfirm={handleConfirmDelete}
         monthName={pendingMonthName}
       />
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

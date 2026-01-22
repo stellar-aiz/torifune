@@ -1,4 +1,4 @@
-import { FiPlay, FiDownload, FiTrash2, FiLoader } from "react-icons/fi";
+import { FiPlay, FiDownload, FiTrash2, FiLoader, FiCheckCircle } from "react-icons/fi";
 
 interface ActionBarProps {
   canStartOcr: boolean;
@@ -11,6 +11,8 @@ interface ActionBarProps {
   onOpenExcel: () => Promise<void>;
   onDeleteMonth: () => void;
   canDeleteMonth: boolean;
+  onValidate: () => void;
+  canValidate: boolean;
 }
 
 export function ActionBar({
@@ -21,6 +23,8 @@ export function ActionBar({
   onOpenExcel,
   onDeleteMonth,
   canDeleteMonth,
+  onValidate,
+  canValidate,
 }: ActionBarProps) {
   const isOcrDisabled = !canStartOcr && !isProcessing;
 
@@ -73,6 +77,23 @@ export function ActionBar({
             </span>
           </div>
         )}
+
+        {/* Validate button */}
+        <button
+          onClick={onValidate}
+          disabled={isProcessing || !canValidate}
+          className={`
+            flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors
+            ${
+              isProcessing || !canValidate
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+            }
+          `}
+        >
+          <FiCheckCircle className="w-3.5 h-3.5" />
+          データ検証
+        </button>
       </div>
 
       {/* Right side: Excel + Delete buttons */}

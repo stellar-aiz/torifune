@@ -235,6 +235,7 @@ export function validateAllReceipts(
 
   return results.map((receipt) => {
     const issues = validateReceipt(receipt, context);
-    return issues.length > 0 ? { ...receipt, issues } : receipt;
+    // 常にissuesを明示的に設定（問題なしの場合はundefined）
+    return { ...receipt, issues: issues.length > 0 ? issues : undefined };
   });
 }

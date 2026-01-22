@@ -63,6 +63,7 @@ export interface ReceiptStoreActions {
   updateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
   // OCR操作
   startOcr: () => Promise<void>;
+  validateReceipts: () => { warningCount: number; errorCount: number };
   clearCurrentMonth: () => void;
   // ソート操作
   toggleSort: (field: SortField) => void;
@@ -479,6 +480,57 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     });
   }, []);
 
+  /** 手動バリデーション実行 */
+  const validateReceipts = useCallback((): { warningCount: number; errorCount: number } => {
+    if (!currentMonthId || !currentYearMonth) {
+      return { warningCount: 0, errorCount: 0 };
+    }
+
+    let warningCount = 0;
+    let errorCount = 0;
+
+    setMonths((prev) => {
+      const updated = prev.map((m) => {
+        if (m.id !== currentMonthId) return m;
+
+        const successReceipts = m.receipts.filter((r) => r.status === "success");
+        if (successReceipts.length === 0) return m;
+
+        // 既存のissueをクリアしてから検証
+        const clearedReceipts = successReceipts.map((r) => ({ ...r, issues: undefined }));
+        const validated = validateAllReceipts(clearedReceipts, currentYearMonth);
+
+        // Count issues
+        for (const receipt of validated) {
+          if (receipt.issues) {
+            for (const issue of receipt.issues) {
+              if (issue.severity === "warning") warningCount++;
+              if (issue.severity === "error") errorCount++;
+            }
+          }
+        }
+
+        return {
+          ...m,
+          receipts: m.receipts.map((r) => {
+            const validatedReceipt = validated.find((v) => v.id === r.id);
+            return validatedReceipt ?? r;
+          }),
+        };
+      });
+
+      // Auto-save after validation
+      const currentMonth = updated.find((m) => m.id === currentMonthId);
+      if (currentMonth) {
+        debouncedSave(currentMonth);
+      }
+
+      return updated;
+    });
+
+    return { warningCount, errorCount };
+  }, [currentMonthId, currentYearMonth]);
+
   return {
     months,
     currentMonthId,
@@ -492,6 +544,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     removeReceipt,
     updateReceipt,
     startOcr,
+    validateReceipts,
     clearCurrentMonth,
     toggleSort,
   };
