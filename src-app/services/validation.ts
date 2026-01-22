@@ -4,6 +4,7 @@
  */
 
 import type { ReceiptData, ValidationIssue } from "../types/receipt";
+import { isMerchantSimilar } from "../utils/stringSimilarity";
 
 const DATE_FORMAT_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -134,6 +135,56 @@ function validateAmountOutlier(
   return null;
 }
 
+/** ファイル重複検出 */
+function detectFileDuplicates(
+  receipt: ReceiptData,
+  allResults: ReceiptData[]
+): ValidationIssue | null {
+  const duplicates = allResults.filter(
+    (r) => r.id !== receipt.id && r.file === receipt.file
+  );
+
+  if (duplicates.length > 0) {
+    return {
+      field: "file",
+      type: "duplicate-file",
+      severity: "warning",
+      message: `同じファイル名のレシートが存在します: ${receipt.file}`,
+    };
+  }
+  return null;
+}
+
+/** データ重複検出（類似度評価使用） */
+function detectDataDuplicates(
+  receipt: ReceiptData,
+  allResults: ReceiptData[]
+): ValidationIssue | null {
+  if (!receipt.date || !receipt.merchant || receipt.amount === undefined) {
+    return null;
+  }
+
+  const duplicates = allResults.filter((r) => {
+    if (r.id === receipt.id) return false;
+    if (!r.merchant) return false;
+    return (
+      r.date === receipt.date &&
+      isMerchantSimilar(r.merchant, receipt.merchant!) &&
+      r.amount === receipt.amount
+    );
+  });
+
+  if (duplicates.length > 0) {
+    return {
+      field: "duplicate",
+      type: "duplicate-data",
+      severity: "warning",
+      message: `類似のレシートが存在します: ${receipt.date} / ${receipt.merchant} / ¥${receipt.amount?.toLocaleString()}`,
+    };
+  }
+  return null;
+}
+
 /** 単一レシートのバリデーション */
 export function validateReceipt(
   receipt: ReceiptData,
@@ -161,6 +212,13 @@ export function validateReceipt(
   const thresholds = calculateOutlierThresholds(amounts);
   const outlierIssue = validateAmountOutlier(receipt.amount, thresholds);
   if (outlierIssue) issues.push(outlierIssue);
+
+  // 重複検出
+  const fileDuplicateIssue = detectFileDuplicates(receipt, context.allResults);
+  if (fileDuplicateIssue) issues.push(fileDuplicateIssue);
+
+  const dataDuplicateIssue = detectDataDuplicates(receipt, context.allResults);
+  if (dataDuplicateIssue) issues.push(dataDuplicateIssue);
 
   return issues;
 }
