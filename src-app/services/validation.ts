@@ -134,24 +134,6 @@ function validateAmountOutlier(
   return null;
 }
 
-/** 店舗名の改行バリデーション */
-function validateMerchantNewline(
-  merchant: string | undefined
-): ValidationIssue | null {
-  if (!merchant) return null;
-
-  if (merchant.includes("\n")) {
-    return {
-      field: "merchant",
-      type: "format",
-      severity: "warning",
-      message: `店舗名に改行が含まれています: "${merchant.replace(/\n/g, "\\n")}"`,
-    };
-  }
-
-  return null;
-}
-
 /** 単一レシートのバリデーション */
 export function validateReceipt(
   receipt: ReceiptData,
@@ -179,10 +161,6 @@ export function validateReceipt(
   const thresholds = calculateOutlierThresholds(amounts);
   const outlierIssue = validateAmountOutlier(receipt.amount, thresholds);
   if (outlierIssue) issues.push(outlierIssue);
-
-  // 店舗名バリデーション
-  const merchantIssue = validateMerchantNewline(receipt.merchant);
-  if (merchantIssue) issues.push(merchantIssue);
 
   return issues;
 }
