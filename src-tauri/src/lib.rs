@@ -33,6 +33,7 @@ pub fn run() {
             commands::copy_file_to_month,
             commands::save_thumbnail,
             commands::read_thumbnail,
+            commands::move_to_trash,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

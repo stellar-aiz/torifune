@@ -145,3 +145,10 @@ export async function readThumbnail(
 ): Promise<string | null> {
   return invoke<string | null>("read_thumbnail", { yearMonth, fileName });
 }
+
+/**
+ * ディレクトリをゴミ箱に移動
+ */
+export async function moveToTrash(path: string): Promise<void> {
+  await invoke<void>("move_to_trash", { path });
+}

@@ -3,7 +3,6 @@ import {
   FiPlus,
   FiSettings,
   FiCalendar,
-  FiTrash2,
   FiChevronRight,
   FiChevronDown,
 } from "react-icons/fi";
@@ -16,7 +15,6 @@ interface SidebarProps {
   currentMonthId: string | null;
   onSelectMonth: (monthId: string) => void;
   onCreateMonth: (yearMonth: string) => void;
-  onDeleteMonth: (monthId: string) => void;
   onOpenSettings: () => void;
 }
 
@@ -25,7 +23,6 @@ export function Sidebar({
   currentMonthId,
   onSelectMonth,
   onCreateMonth,
-  onDeleteMonth,
   onOpenSettings,
 }: SidebarProps) {
   // モーダル表示状態
@@ -172,17 +169,6 @@ export function Sidebar({
                                   {monthItem.successCount}/{monthItem.receiptCount}
                                 </span>
                               )}
-                            </button>
-                            {/* 削除ボタン（ホバー時に表示） */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDeleteMonth(monthItem.monthId);
-                              }}
-                              className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="削除"
-                            >
-                              <FiTrash2 className="w-3 h-3" />
                             </button>
                           </li>
                         );

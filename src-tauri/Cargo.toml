@@ -29,3 +29,4 @@ futures = "0.3"
 base64 = "0.22"
 jsonwebtoken = "9"
 chrono = { version = "0.4", features = ["serde"] }
+trash = "5.2"

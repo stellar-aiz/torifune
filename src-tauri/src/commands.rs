@@ -599,6 +599,18 @@ pub async fn read_thumbnail(
     Ok(Some(data_url))
 }
 
+/// ディレクトリをゴミ箱に移動
+#[tauri::command]
+pub async fn move_to_trash(path: String) -> Result<(), String> {
+    let path_buf = std::path::PathBuf::from(&path);
+
+    if !path_buf.exists() {
+        return Err(format!("パスが存在しません: {}", path));
+    }
+
+    trash::delete(&path_buf).map_err(|e| format!("ゴミ箱への移動に失敗しました: {}", e))
+}
+
 /// ファイルを月別ディレクトリにコピー
 #[tauri::command]
 pub async fn copy_file_to_month(

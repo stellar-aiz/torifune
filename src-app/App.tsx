@@ -4,17 +4,19 @@ import { ReceiptDropzone } from "./components/receipt/ReceiptDropzone";
 import { ReceiptList } from "./components/receipt/ReceiptList";
 import { ActionBar } from "./components/action/ActionBar";
 import { SettingsModal } from "./components/settings/SettingsModal";
+import { DeleteConfirmModal } from "./components/month/DeleteConfirmModal";
 import { useReceiptStore } from "./hooks/useReceiptStore";
 import { formatMonthName } from "./types/receipt";
-import { getRootDirectory } from "./services/tauri/commands";
+import { getRootDirectory, moveToTrash } from "./services/tauri/commands";
 import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
-import { ask } from "@tauri-apps/plugin-dialog";
 import { FaFolderOpen } from "react-icons/fa";
 
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentMonthPath, setCurrentMonthPath] = useState<string | null>(null);
+  const [pendingDeleteMonthId, setPendingDeleteMonthId] = useState<string | null>(null);
   const store = useReceiptStore();
 
   const handleOpenSettings = useCallback(() => {
@@ -89,20 +91,40 @@ function App() {
     await openSummaryExcel(currentReceipts, currentMonth.yearMonth);
   }, [currentMonth, currentReceipts]);
 
-  // 削除確認付きハンドラ
-  const handleDeleteMonthWithConfirm = useCallback(async () => {
-    if (!store.currentMonthId || !currentMonthName) return;
+  // 削除リクエストハンドラ（サイドバー・ActionBar共通）
+  const handleRequestDeleteMonth = useCallback((monthId: string) => {
+    setPendingDeleteMonthId(monthId);
+    setIsDeleteModalOpen(true);
+  }, []);
 
-    const confirmed = await ask(
-      `「${currentMonthName}」を削除しますか？\n\n` +
-      `この操作はアプリ上のデータのみを削除します。\nファイルシステム上のファイルは削除されません。`,
-      { title: "削除の確認", kind: "warning" }
-    );
+  // 削除対象の月名を計算
+  const pendingMonthName = useMemo(() => {
+    const month = store.months.find(m => m.id === pendingDeleteMonthId);
+    return month ? formatMonthName(month.yearMonth) : "";
+  }, [store.months, pendingDeleteMonthId]);
 
-    if (confirmed) {
-      store.deleteMonth(store.currentMonthId);
+  // 削除確認時のハンドラ
+  const handleConfirmDelete = useCallback(async (deletePhysically: boolean) => {
+    if (!pendingDeleteMonthId) return;
+
+    if (deletePhysically) {
+      const monthToDelete = store.months.find(m => m.id === pendingDeleteMonthId);
+      if (monthToDelete) {
+        const rootDir = await getRootDirectory();
+        const year = monthToDelete.yearMonth.slice(0, 4);
+        const month = monthToDelete.yearMonth.slice(4, 6);
+        const pathToDelete = `${rootDir}/${year}/${month}`;
+        try {
+          await moveToTrash(pathToDelete);
+        } catch (error) {
+          console.error("Failed to move to trash:", error);
+          // ゴミ箱移動に失敗してもアプリ上のデータは削除する
+        }
+      }
     }
-  }, [store.currentMonthId, currentMonthName, store]);
+    store.deleteMonth(pendingDeleteMonthId);
+    setPendingDeleteMonthId(null);
+  }, [pendingDeleteMonthId, store]);
 
   return (
     <div className="h-screen flex bg-gray-50">
@@ -112,7 +134,6 @@ function App() {
         currentMonthId={store.currentMonthId}
         onSelectMonth={store.selectMonth}
         onCreateMonth={handleCreateMonth}
-        onDeleteMonth={store.deleteMonth}
         onOpenSettings={handleOpenSettings}
       />
 
@@ -148,7 +169,7 @@ function App() {
               processingProgress={processingProgress}
               onStartOcr={store.startOcr}
               onOpenExcel={handleOpenExcel}
-              onDeleteMonth={handleDeleteMonthWithConfirm}
+              onDeleteMonth={() => handleRequestDeleteMonth(store.currentMonthId!)}
               canDeleteMonth={!!store.currentMonthId}
             />
 
@@ -226,6 +247,15 @@ function App() {
       </main>
 
       <SettingsModal isOpen={isSettingsOpen} onClose={handleCloseSettings} />
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setPendingDeleteMonthId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        monthName={pendingMonthName}
+      />
     </div>
   );
 }
