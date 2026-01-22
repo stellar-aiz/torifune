@@ -254,10 +254,10 @@ async function generateSummaryExcel(
       [ExcelColumnLabel.ValidationIssues]: issuesText,
     });
 
-    // 通貨コードがJPY以外の場合は赤字にする
+    // 通貨コードがJPY以外の場合は赤字で太字にする
     if (receipt.currency && receipt.currency !== "JPY") {
       const currencyCell = row.getCell(getColumnIndex(ExcelColumnLabel.Currency));
-      currencyCell.font = { color: { argb: "FFCC0000" } };
+      currencyCell.font = { color: { argb: "FFCC0000" }, bold: true };
     }
 
     // 検証結果列の文字色を設定
