@@ -184,6 +184,32 @@ impl GoogleDocumentAiProvider {
         entity.mention_text.clone()
     }
 
+    /// エンティティから通貨コードを解決（正規化値を優先）
+    fn resolve_currency(entity: &DocumentAiEntity) -> Option<String> {
+        if let Some(ref normalized) = entity.normalized_value {
+            // まず text フィールドを確認（"USD", "JPY" など）
+            if let Some(ref text) = normalized.text {
+                return Some(text.clone());
+            }
+            // money_value.currency_code を確認
+            if let Some(ref money) = normalized.money_value {
+                if let Some(ref code) = money.currency_code {
+                    return Some(code.clone());
+                }
+            }
+        }
+        // フォールバック：mention_text を通貨コードに変換
+        entity.mention_text.as_ref().map(|s| {
+            match s.trim() {
+                "¥" | "\\" | "￥" => "JPY".to_string(),
+                "$" => "USD".to_string(),
+                "€" => "EUR".to_string(),
+                "£" => "GBP".to_string(),
+                other => other.to_string(),
+            }
+        })
+    }
+
     /// エンティティから金額と通貨コードを解決
     fn resolve_amount(entity: &DocumentAiEntity) -> (Option<f64>, Option<String>) {
         if let Some(ref normalized) = entity.normalized_value {
@@ -351,6 +377,15 @@ impl OcrProvider for GoogleDocumentAiProvider {
                     let (amount, currency) = Self::resolve_amount(total_entity);
                     receipt_data.amount = amount;
                     receipt_data.currency = currency;
+                }
+
+                // 通貨が取得できなかった場合、独立したcurrencyエンティティを検索
+                if receipt_data.currency.is_none() {
+                    if let Some(currency_entity) =
+                        Self::find_entity(&entities, &["currency"])
+                    {
+                        receipt_data.currency = Self::resolve_currency(currency_entity);
+                    }
                 }
             }
         }
