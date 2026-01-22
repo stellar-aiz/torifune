@@ -260,7 +260,7 @@ function App() {
                     onClick={() => store.createMonth()}
                     className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                   >
-                    新規申請月を作成
+                    今月の申請を作成
                   </button>
                 </>
               )}
