@@ -86,7 +86,16 @@ export function ReceiptTable({
           ))}
         </tbody>
         <tfoot>
-          {/* TODO: Total (sum) */}
+          <tr className="bg-gray-50 border-t border-gray-200">
+            <td colSpan={8} className="px-3 py-2">
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>合計: {receipts.length}件</span>
+                <span>
+                  ¥{receipts.reduce((sum, r) => sum + (r.amount || 0), 0).toLocaleString()}
+                </span>
+              </div>
+            </td>
+          </tr>
         </tfoot>
       </table>
     </div>
