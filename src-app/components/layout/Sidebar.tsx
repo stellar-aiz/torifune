@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   FiPlus,
   FiSettings,
@@ -32,21 +32,27 @@ export function Sidebar({
   const [isCreateMonthModalOpen, setIsCreateMonthModalOpen] = useState(false);
 
   // 展開されている年を管理
-  const [expandedYears, setExpandedYears] = useState<Set<string>>(() => {
-    // 初期状態: 現在選択中の月がある年を展開
-    const currentMonth = months.find((m) => m.id === currentMonthId);
-    if (currentMonth) {
-      return new Set([currentMonth.yearMonth.slice(0, 4)]);
-    }
-    // データがあれば最新の年を展開
-    if (months.length > 0) {
+  const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
+  const isInitialized = useRef(false);
+
+  // 初期展開: monthsが読み込まれたら当年（または最新年）を展開
+  useEffect(() => {
+    if (isInitialized.current || months.length === 0) return;
+    isInitialized.current = true;
+
+    const currentYear = new Date().getFullYear().toString();
+    const hasCurrentYear = months.some((m) => m.yearMonth.startsWith(currentYear));
+
+    if (hasCurrentYear) {
+      setExpandedYears(new Set([currentYear]));
+    } else {
+      // 当年のデータがなければ最新の年を展開
       const sortedMonths = [...months].sort((a, b) =>
         b.yearMonth.localeCompare(a.yearMonth)
       );
-      return new Set([sortedMonths[0].yearMonth.slice(0, 4)]);
+      setExpandedYears(new Set([sortedMonths[0].yearMonth.slice(0, 4)]));
     }
-    return new Set();
-  });
+  }, [months]);
 
   // 選択された月の年を自動展開
   useEffect(() => {
@@ -147,7 +153,7 @@ export function Sidebar({
                                 w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors
                                 ${
                                   isActive
-                                    ? "bg-yellow-500/20 text-yellow-300 font-medium"
+                                    ? "bg-teal-500/20 text-teal-300 font-medium"
                                     : "text-gray-300 hover:bg-gray-800 hover:text-white"
                                 }
                               `}
@@ -160,7 +166,7 @@ export function Sidebar({
                                 <span
                                   className={`
                                     text-xs px-1.5 py-0.5 rounded-full
-                                    ${isActive ? "bg-yellow-500/30 text-yellow-200" : "bg-gray-700"}
+                                    ${isActive ? "bg-teal-500/30 text-teal-200" : "bg-gray-700"}
                                   `}
                                 >
                                   {monthItem.successCount}/{monthItem.receiptCount}
