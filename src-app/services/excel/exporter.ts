@@ -8,6 +8,11 @@ import { writeFile, readFile, exists } from "@tauri-apps/plugin-fs";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { nanoid } from "nanoid";
 import type { ReceiptData, ValidationIssue } from "../../types/receipt";
+import {
+  ExcelColumnLabel,
+  getColumnIndex,
+  generateSheetColumns,
+} from "../../types/excel";
 import { isPdf } from "../pdf/pdfExtractor";
 import { getRootDirectory } from "../tauri/commands";
 
@@ -101,8 +106,8 @@ export async function loadReceiptsFromExcel(
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
 
-    const file = String(row.getCell(1).value ?? "");
-    const linkCell = row.getCell(3);
+    const file = String(row.getCell(getColumnIndex(ExcelColumnLabel.FileName)).value ?? "");
+    const linkCell = row.getCell(getColumnIndex(ExcelColumnLabel.OriginalFileLink));
     const filePathCellValue = linkCell.value;
     const filePathCellHyperlink = linkCell.hyperlink;
 
@@ -128,14 +133,16 @@ export async function loadReceiptsFromExcel(
       filePath = `${directoryPath}/${file}`;
     }
 
-    const dateValue = row.getCell(4).value;
-    const merchantValue = row.getCell(5).value;
-    const amountValue = row.getCell(6).value;
-    const issuesValue = row.getCell(7).value;
+    const dateValue = row.getCell(getColumnIndex(ExcelColumnLabel.Date)).value;
+    const merchantValue = row.getCell(getColumnIndex(ExcelColumnLabel.Merchant)).value;
+    const amountValue = row.getCell(getColumnIndex(ExcelColumnLabel.Amount)).value;
+    const currencyValue = row.getCell(getColumnIndex(ExcelColumnLabel.Currency)).value;
+    const issuesValue = row.getCell(getColumnIndex(ExcelColumnLabel.ValidationIssues)).value;
 
     const date = dateValue ? String(dateValue) : undefined;
     const merchant = merchantValue ? String(merchantValue) : undefined;
     const amount = amountValue ? Number(amountValue) : undefined;
+    const currency = currencyValue ? String(currencyValue) : undefined;
     const issuesText = issuesValue ? String(issuesValue) : "";
     const issues = parseIssuesText(issuesText);
 
@@ -149,6 +156,7 @@ export async function loadReceiptsFromExcel(
       date,
       merchant,
       amount,
+      currency,
       issues: issues.length > 0 ? issues : undefined,
       status,
     });
@@ -218,16 +226,8 @@ async function generateSummaryExcel(
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Summary");
 
-  // カラム設定
-  sheet.columns = [
-    { header: "ファイル名", key: "file", width: 24 },
-    { header: "画像プレビュー", key: "preview", width: 32 },
-    { header: "元ファイルへのリンク", key: "link", width: 40 },
-    { header: "日付", key: "date", width: 18 },
-    { header: "店舗", key: "merchant", width: 28 },
-    { header: "合計", key: "amount", width: 14 },
-    { header: "検証結果", key: "issues", width: 40 },
-  ];
+  // カラム設定（types/excel.ts の定義から生成）
+  sheet.columns = generateSheetColumns();
 
   // ヘッダー行のスタイル
   sheet.views = [{ state: "frozen", ySplit: 1 }];
@@ -244,25 +244,26 @@ async function generateSummaryExcel(
         .join("\n") ?? "";
 
     const row = sheet.addRow({
-      file: receipt.file,
-      preview: "",
-      link: receipt.filePath,
-      date: receipt.date ?? "",
-      merchant: receipt.merchant ?? "",
-      amount: receipt.amount ?? null,
-      issues: issuesText,
+      [ExcelColumnLabel.FileName]: receipt.file,
+      [ExcelColumnLabel.ImagePreview]: "",
+      [ExcelColumnLabel.OriginalFileLink]: receipt.filePath,
+      [ExcelColumnLabel.Date]: receipt.date ?? "",
+      [ExcelColumnLabel.Merchant]: receipt.merchant ?? "",
+      [ExcelColumnLabel.Amount]: receipt.amount ?? null,
+      [ExcelColumnLabel.Currency]: receipt.currency ?? "",
+      [ExcelColumnLabel.ValidationIssues]: issuesText,
     });
 
     // 検証結果列の文字色を設定
     if (receipt.issues && receipt.issues.length > 0) {
-      const issuesCell = row.getCell(7);
+      const issuesCell = row.getCell(getColumnIndex(ExcelColumnLabel.ValidationIssues));
       const hasError = receipt.issues.some((issue) => issue.severity === "error");
       issuesCell.font = {
         color: { argb: hasError ? "FFCC0000" : "FFCC6600" },
       };
     }
 
-    const previewCell = row.getCell(2);
+    const previewCell = row.getCell(getColumnIndex(ExcelColumnLabel.ImagePreview));
     previewCell.value = "プレビューなし";
     previewCell.alignment = { vertical: "middle", horizontal: "center" };
 
@@ -293,8 +294,10 @@ async function generateSummaryExcel(
       if (imageId !== undefined) {
         const rowNumber = row.number;
         sheet.getRow(rowNumber).height = 90;
+        // col は 0-indexed なので -1
+        const imageCol = getColumnIndex(ExcelColumnLabel.ImagePreview) - 1;
         sheet.addImage(imageId, {
-          tl: { col: 1.1, row: rowNumber - 1 + 0.1 },
+          tl: { col: imageCol + 0.1, row: rowNumber - 1 + 0.1 },
           ext: { width: 130, height: 90 },
           editAs: "oneCell",
         });
@@ -305,7 +308,7 @@ async function generateSummaryExcel(
     }
 
     // ハイパーリンク設定（filePathが文字列であることを保証）
-    const linkCell = row.getCell(3);
+    const linkCell = row.getCell(getColumnIndex(ExcelColumnLabel.OriginalFileLink));
     const safeFilePath = typeof receipt.filePath === "string" ? receipt.filePath : String(receipt.filePath ?? "");
     linkCell.value = {
       text: safeFilePath,

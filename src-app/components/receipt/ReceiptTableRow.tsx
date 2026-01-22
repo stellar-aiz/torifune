@@ -201,7 +201,7 @@ export function ReceiptTableRow({
 
       {/* Currency */}
       <td className="w-fit">
-        <span className="text-sm">{receipt.currency ?? "JPY"}</span>
+        <span className="text-sm">{receipt.currency ?? "-"}</span>
       </td>
 
       {/* Validation */}
