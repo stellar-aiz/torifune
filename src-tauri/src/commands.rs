@@ -108,7 +108,7 @@ pub struct OcrRequest {
 }
 
 /// 並列処理の最大同時実行数
-const MAX_CONCURRENT_OCR: usize = 3;
+const MAX_CONCURRENT_OCR: usize = 4;
 
 /// バッチOCR処理（並列実行）
 #[tauri::command]
@@ -151,7 +151,7 @@ pub async fn batch_ocr_receipts(
                     .unwrap_or(&request.file_path)
                     .to_string();
 
-                // セマフォでガード（3並列に制限）
+                // セマフォでガード（4並列に制限）
                 let _permit = semaphore.acquire().await.unwrap();
 
                 let result = match provider
