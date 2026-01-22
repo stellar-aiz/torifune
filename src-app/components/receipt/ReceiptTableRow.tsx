@@ -112,7 +112,7 @@ export function ReceiptTableRow({
   // Validation column content
   const renderValidationColumn = () => {
     if (!hasIssues) {
-      return <FiCheckCircle className="w-4 h-4 text-green-500" />;
+      return <FiCheckCircle className="w-4 h-4 text-green-500 m-auto" />;
     }
 
     const tooltipContent = (
@@ -174,6 +174,7 @@ export function ReceiptTableRow({
           type="date"
           placeholder="-"
           onChange={handleDateSave}
+          className="hover:bg-yellow-50"
         />
       </td>
 
@@ -184,6 +185,7 @@ export function ReceiptTableRow({
           type="text"
           placeholder="-"
           onChange={handleMerchantSave}
+          className="hover:bg-yellow-50"
         />
       </td>
 
@@ -195,13 +197,13 @@ export function ReceiptTableRow({
           type="number"
           placeholder="-"
           onChange={handleAmountSave}
-          className="text-right"
+          className="text-right hover:bg-yellow-50"
         />
       </td>
 
       {/* Currency */}
       <td className="w-fit">
-        <span className="text-sm">{receipt.currency ?? "-"}</span>
+        <span className="text-xs text-left">{receipt.currency ?? "-"}</span>
       </td>
 
       {/* Validation */}

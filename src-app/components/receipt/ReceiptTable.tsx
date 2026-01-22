@@ -66,7 +66,7 @@ export function ReceiptTable({
             >
               {/* 単位 */}
             </th>
-            <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[50px] px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               検証
             </th>
             <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
