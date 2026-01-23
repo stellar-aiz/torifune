@@ -137,7 +137,7 @@ export function ReceiptTableRow({
       `}
     >
       {/* Filename */}
-      <td className="min-w-[200px] px-3 py-2">
+      <td className="min-w-[160px] px-2 py-1.5">
         <div className="flex items-center gap-2">
           {getStatusIcon()}
           <span className="text-sm text-gray-800 truncate" title={receipt.file}>
@@ -147,7 +147,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Thumbnail */}
-      <td className="w-fit px-3 py-2">
+      <td className="w-fit px-2 py-1.5">
         <ThumbnailPreview
           src={receipt.thumbnailDataUrl}
           alt={receipt.file}
@@ -158,7 +158,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Date */}
-      <td className="min-w-[120px] px-3 py-2">
+      <td className="min-w-[100px] px-2 py-1.5">
         <EditableCell
           value={receipt.date ?? ""}
           type="date"
@@ -169,7 +169,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Merchant */}
-      <td className="min-w-[180px] px-3 py-2">
+      <td className="min-w-[140px] px-2 py-1.5">
         <EditableCell
           value={receipt.merchant ?? ""}
           type="text"
@@ -180,7 +180,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Receiver Name */}
-      <td className="min-w-[120px] px-3 py-2">
+      <td className="min-w-[100px] px-2 py-1.5">
         <EditableCell
           value={receipt.receiverName ?? ""}
           type="text"
@@ -191,7 +191,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Amount */}
-      <td className="min-w-[100px] px-3 py-2">
+      <td className="min-w-[80px] px-2 py-1.5">
         <EditableCell
           value={receipt.amount?.toString() ?? ""}
           type="number"
@@ -202,14 +202,14 @@ export function ReceiptTableRow({
       </td>
 
       {/* Currency */}
-      <td className="w-fit">
+      <td className="w-fit px-2 py-1.5">
         <span className={`text-xs text-left ${receipt.currency && receipt.currency !== "JPY" ? "text-red-500" : ""}`}>
           {receipt.currency ?? "-"}
         </span>
       </td>
 
       {/* Account Category */}
-      <td className="min-w-[120px] px-3 py-2">
+      <td className="min-w-[100px] px-2 py-1.5">
         <EditableCell
           value={receipt.accountCategory ?? ""}
           type="select"
@@ -220,7 +220,7 @@ export function ReceiptTableRow({
       </td>
 
       {/* Note */}
-      <td className="min-w-[150px] px-3 py-2">
+      <td className="min-w-[120px] px-2 py-1.5">
         <EditableCell
           value={receipt.note ?? ""}
           type="text"
@@ -231,12 +231,12 @@ export function ReceiptTableRow({
       </td>
 
       {/* Validation */}
-      <td className="min-w-[50px] px-3 py-2 text-center">
+      <td className="min-w-[40px] px-2 py-1.5 text-center">
         {renderValidationColumn()}
       </td>
 
       {/* Actions */}
-      <td className="min-w-[50px] px-3 py-2 text-center">
+      <td className="min-w-[40px] px-2 py-1.5 text-center">
         <button
           onClick={handleRemoveClick}
           className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"

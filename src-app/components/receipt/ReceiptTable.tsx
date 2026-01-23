@@ -31,52 +31,52 @@ export function ReceiptTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse min-w-[750px]">
+      <table className="w-full border-collapse min-w-[640px]">
         <thead>
           <tr className="bg-gray-100 border-b border-gray-200 sticky top-0">
-            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[160px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               ファイル名
             </th>
-            <th className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               {/* サムネイル */}
             </th>
             <th
-              className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("date")}
             >
               日付
               <SortIndicator field="date" />
             </th>
             <th
-              className="min-w-[180px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[140px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("merchant")}
             >
               店舗
               <SortIndicator field="merchant" />
             </th>
-            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               宛名
             </th>
             <th
-              className="min-w-[100px] px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[80px] px-2 py-1.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("amount")}
             >
               金額
               <SortIndicator field="amount" />
             </th>
-            <th className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               {/* 単位 */}
             </th>
-            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               勘定科目
             </th>
-            <th className="min-w-[150px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[120px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               備考
             </th>
-            <th className="min-w-[50px] px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[40px] px-2 py-1.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               検証
             </th>
-            <th className="min-w-[50px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[40px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               {/* 操作 */}
             </th>
           </tr>
@@ -94,7 +94,7 @@ export function ReceiptTable({
         </tbody>
         <tfoot>
           <tr className="bg-gray-50 border-t border-gray-200">
-            <td colSpan={11} className="px-3 py-2">
+            <td colSpan={11} className="px-2 py-1.5">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>合計: {receipts.length}件</span>
                 <span>

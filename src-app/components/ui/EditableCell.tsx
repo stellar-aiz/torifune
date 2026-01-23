@@ -116,7 +116,7 @@ export function EditableCell({
   return (
     <div
       onClick={handleClick}
-      className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 truncate transition-colors duration-150 ${
+      className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 text-sm truncate transition-colors duration-150 ${
         isEmpty ? "text-gray-400 italic" : "text-gray-800"
       } ${className}`}
     >
