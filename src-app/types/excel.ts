@@ -10,8 +10,11 @@ export enum ExcelColumnLabel {
   OriginalFileLink = "originalFileLink",
   Date = "date",
   Merchant = "merchant",
+  ReceiverName = "ReceiverName",
   Amount = "amount",
   Currency = "currency",
+  AccountCategory = "AccountCategory",
+  Note = "Note",
   ValidationIssues = "validationIssues",
 }
 
@@ -28,8 +31,11 @@ export const ExcelColumns: Record<ExcelColumnLabel, ExcelColumnMeta> = {
   [ExcelColumnLabel.OriginalFileLink]: { header: "元ファイルへのリンク", width: 40 },
   [ExcelColumnLabel.Date]: { header: "日付", width: 18 },
   [ExcelColumnLabel.Merchant]: { header: "店舗", width: 28 },
+  [ExcelColumnLabel.ReceiverName]: { header: "宛名", width: 20 },
   [ExcelColumnLabel.Amount]: { header: "金額", width: 14 },
   [ExcelColumnLabel.Currency]: { header: "通貨", width: 8 },
+  [ExcelColumnLabel.AccountCategory]: { header: "勘定科目", width: 15 },
+  [ExcelColumnLabel.Note]: { header: "備考", width: 25 },
   [ExcelColumnLabel.ValidationIssues]: { header: "検証結果", width: 40 },
 };
 
@@ -40,8 +46,11 @@ export const ExcelColumnOrder: ExcelColumnLabel[] = [
   ExcelColumnLabel.OriginalFileLink,
   ExcelColumnLabel.Date,
   ExcelColumnLabel.Merchant,
+  ExcelColumnLabel.ReceiverName,
   ExcelColumnLabel.Amount,
   ExcelColumnLabel.Currency,
+  ExcelColumnLabel.AccountCategory,
+  ExcelColumnLabel.Note,
   ExcelColumnLabel.ValidationIssues,
 ];
 

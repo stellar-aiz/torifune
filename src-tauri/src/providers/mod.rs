@@ -37,6 +37,8 @@ pub struct ReceiptData {
     pub amount: Option<f64>,
     /// 通貨コード（JPY, USD など）
     pub currency: Option<String>,
+    /// 宛名
+    pub receiver_name: Option<String>,
 }
 
 impl ReceiptData {
@@ -47,6 +49,7 @@ impl ReceiptData {
             date: None,
             amount: None,
             currency: None,
+            receiver_name: None,
         }
     }
 }

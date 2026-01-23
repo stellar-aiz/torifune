@@ -54,6 +54,9 @@ export function ReceiptTable({
               店舗
               <SortIndicator field="merchant" />
             </th>
+            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+              宛名
+            </th>
             <th
               className="min-w-[100px] px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("amount")}
@@ -61,10 +64,14 @@ export function ReceiptTable({
               金額
               <SortIndicator field="amount" />
             </th>
-            <th
-              className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer select-none"
-            >
+            <th className="w-fit px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               {/* 単位 */}
+            </th>
+            <th className="min-w-[120px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+              勘定科目
+            </th>
+            <th className="min-w-[150px] px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+              備考
             </th>
             <th className="min-w-[50px] px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               検証
@@ -87,7 +94,7 @@ export function ReceiptTable({
         </tbody>
         <tfoot>
           <tr className="bg-gray-50 border-t border-gray-200">
-            <td colSpan={8} className="px-3 py-2">
+            <td colSpan={11} className="px-3 py-2">
               <div className="flex justify-between text-sm text-gray-600">
                 <span>合計: {receipts.length}件</span>
                 <span>

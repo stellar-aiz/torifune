@@ -103,11 +103,35 @@ export async function loadReceiptsFromExcel(
 
   const receipts: ReceiptData[] = [];
 
+  // ヘッダー行から新フォーマットか判定（"宛名"列の有無）
+  const headerRow = sheet.getRow(1);
+  let isNewFormat = false;
+  headerRow.eachCell((cell) => {
+    if (String(cell.value) === "宛名") {
+      isNewFormat = true;
+    }
+  });
+
+  // 旧フォーマットの場合のカラムインデックス（1-indexed）
+  // 旧: FileName(1), ImagePreview(2), OriginalFileLink(3), Date(4), Merchant(5), Amount(6), Currency(7), ValidationIssues(8)
+  const oldFormatIndices = {
+    fileName: 1,
+    originalFileLink: 3,
+    date: 4,
+    merchant: 5,
+    amount: 6,
+    currency: 7,
+    validationIssues: 8,
+  };
+
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
 
-    const file = String(row.getCell(getColumnIndex(ExcelColumnLabel.FileName)).value ?? "");
-    const linkCell = row.getCell(getColumnIndex(ExcelColumnLabel.OriginalFileLink));
+    const fileColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.FileName) : oldFormatIndices.fileName;
+    const linkColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.OriginalFileLink) : oldFormatIndices.originalFileLink;
+
+    const file = String(row.getCell(fileColIndex).value ?? "");
+    const linkCell = row.getCell(linkColIndex);
     const filePathCellValue = linkCell.value;
     const filePathCellHyperlink = linkCell.hyperlink;
 
@@ -133,11 +157,17 @@ export async function loadReceiptsFromExcel(
       filePath = `${directoryPath}/${file}`;
     }
 
-    const dateValue = row.getCell(getColumnIndex(ExcelColumnLabel.Date)).value;
-    const merchantValue = row.getCell(getColumnIndex(ExcelColumnLabel.Merchant)).value;
-    const amountValue = row.getCell(getColumnIndex(ExcelColumnLabel.Amount)).value;
-    const currencyValue = row.getCell(getColumnIndex(ExcelColumnLabel.Currency)).value;
-    const issuesValue = row.getCell(getColumnIndex(ExcelColumnLabel.ValidationIssues)).value;
+    const dateColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Date) : oldFormatIndices.date;
+    const merchantColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Merchant) : oldFormatIndices.merchant;
+    const amountColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Amount) : oldFormatIndices.amount;
+    const currencyColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Currency) : oldFormatIndices.currency;
+    const issuesColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.ValidationIssues) : oldFormatIndices.validationIssues;
+
+    const dateValue = row.getCell(dateColIndex).value;
+    const merchantValue = row.getCell(merchantColIndex).value;
+    const amountValue = row.getCell(amountColIndex).value;
+    const currencyValue = row.getCell(currencyColIndex).value;
+    const issuesValue = row.getCell(issuesColIndex).value;
 
     const date = dateValue ? String(dateValue) : undefined;
     const merchant = merchantValue ? String(merchantValue) : undefined;
@@ -145,6 +175,19 @@ export async function loadReceiptsFromExcel(
     const currency = currencyValue ? String(currencyValue) : undefined;
     const issuesText = issuesValue ? String(issuesValue) : "";
     const issues = parseIssuesText(issuesText);
+
+    // 新フォーマットのみ: receiverName, accountCategory, note を読み込む
+    let receiverName: string | undefined;
+    let accountCategory: string | undefined;
+    let note: string | undefined;
+    if (isNewFormat) {
+      const receiverNameValue = row.getCell(getColumnIndex(ExcelColumnLabel.ReceiverName)).value;
+      const accountCategoryValue = row.getCell(getColumnIndex(ExcelColumnLabel.AccountCategory)).value;
+      const noteValue = row.getCell(getColumnIndex(ExcelColumnLabel.Note)).value;
+      receiverName = receiverNameValue ? String(receiverNameValue) : undefined;
+      accountCategory = accountCategoryValue ? String(accountCategoryValue) : undefined;
+      note = noteValue ? String(noteValue) : undefined;
+    }
 
     const hasOcrData = date !== undefined || merchant !== undefined || amount !== undefined;
     const status = hasOcrData ? "success" : "pending";
@@ -157,6 +200,9 @@ export async function loadReceiptsFromExcel(
       merchant,
       amount,
       currency,
+      receiverName,
+      accountCategory,
+      note,
       issues: issues.length > 0 ? issues : undefined,
       status,
     });
@@ -249,8 +295,11 @@ async function generateSummaryExcel(
       [ExcelColumnLabel.OriginalFileLink]: receipt.filePath,
       [ExcelColumnLabel.Date]: receipt.date ?? "",
       [ExcelColumnLabel.Merchant]: receipt.merchant ?? "",
+      [ExcelColumnLabel.ReceiverName]: receipt.receiverName ?? "",
       [ExcelColumnLabel.Amount]: receipt.amount ?? null,
       [ExcelColumnLabel.Currency]: receipt.currency ?? "",
+      [ExcelColumnLabel.AccountCategory]: receipt.accountCategory ?? "",
+      [ExcelColumnLabel.Note]: receipt.note ?? "",
       [ExcelColumnLabel.ValidationIssues]: issuesText,
     });
 

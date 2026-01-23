@@ -12,6 +12,7 @@ import { EditableCell } from "../ui/EditableCell";
 import { ThumbnailPreview } from "../ui/ThumbnailPreview";
 import { Tooltip } from "../ui/Tooltip";
 import type { ReceiptData } from "../../types/receipt";
+import { ACCOUNT_CATEGORIES } from "../../constants/accountCategories";
 import { generateThumbnail } from "../../services/pdf/pdfExtractor";
 import { saveThumbnail } from "../../services/tauri/commands";
 
@@ -30,7 +31,6 @@ export function ReceiptTableRow({
 }: ReceiptTableRowProps) {
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
-  // Thumbnail generation logic (copied from ReceiptCard)
   useEffect(() => {
     if (receipt.thumbnailDataUrl || isGeneratingThumbnail || !receipt.filePath) {
       return;
@@ -61,8 +61,7 @@ export function ReceiptTableRow({
     onUpdate,
   ]);
 
-  // Status icon logic
-  const getStatusIcon = () => {
+  function getStatusIcon(): React.ReactElement {
     switch (receipt.status) {
       case "pending":
         return <FiClock className="w-4 h-4 text-gray-400" />;
@@ -77,25 +76,21 @@ export function ReceiptTableRow({
           </Tooltip>
         );
     }
-  };
+  }
 
   // Validation helpers
   const hasIssues = receipt.issues && receipt.issues.length > 0;
   const hasErrors = receipt.issues?.some((i) => i.severity === "error");
   const hasWarnings = receipt.issues?.some((i) => i.severity === "warning");
 
-  // Handle save for each field
-  const handleDateSave = (newValue: string) => {
-    onUpdate({ date: newValue || undefined });
-  };
-
-  const handleMerchantSave = (newValue: string) => {
-    onUpdate({ merchant: newValue || undefined });
-  };
-
-  const handleAmountSave = (newValue: string) => {
-    onUpdate({ amount: newValue ? parseFloat(newValue) : undefined });
-  };
+  // Field update handler
+  function handleFieldChange(field: keyof ReceiptData, newValue: string): void {
+    if (field === "amount") {
+      onUpdate({ amount: newValue ? parseFloat(newValue) : undefined });
+    } else {
+      onUpdate({ [field]: newValue || undefined });
+    }
+  }
 
   const handleRemoveClick = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,8 +104,7 @@ export function ReceiptTableRow({
     }
   }, [receipt.file, onRemove]);
 
-  // Validation column content
-  const renderValidationColumn = () => {
+  function renderValidationColumn(): React.ReactElement {
     if (!hasIssues) {
       return <FiCheckCircle className="w-4 h-4 text-green-500 m-auto" />;
     }
@@ -130,20 +124,16 @@ export function ReceiptTableRow({
         />
       </Tooltip>
     );
-  };
+  }
 
-  // Row background class
-  const getRowBackgroundClass = () => {
-    if (hasErrors) return "bg-red-50";
-    if (hasWarnings) return "bg-yellow-50";
-    return "";
-  };
+  // Row background based on validation severity
+  const rowBgClass = hasErrors ? "bg-red-50" : hasWarnings ? "bg-yellow-50" : "";
 
   return (
     <tr
       className={`
         border-b border-gray-200 hover:bg-gray-50 transition-colors
-        ${getRowBackgroundClass()}
+        ${rowBgClass}
       `}
     >
       {/* Filename */}
@@ -173,7 +163,7 @@ export function ReceiptTableRow({
           value={receipt.date ?? ""}
           type="date"
           placeholder="-"
-          onChange={handleDateSave}
+          onChange={(v) => handleFieldChange("date", v)}
           className="hover:bg-yellow-50"
         />
       </td>
@@ -184,19 +174,29 @@ export function ReceiptTableRow({
           value={receipt.merchant ?? ""}
           type="text"
           placeholder="-"
-          onChange={handleMerchantSave}
+          onChange={(v) => handleFieldChange("merchant", v)}
           className="hover:bg-yellow-50"
         />
       </td>
 
+      {/* Receiver Name */}
+      <td className="min-w-[120px] px-3 py-2">
+        <EditableCell
+          value={receipt.receiverName ?? ""}
+          type="text"
+          placeholder="宛名"
+          onChange={(v) => handleFieldChange("receiverName", v)}
+          className="hover:bg-yellow-50"
+        />
+      </td>
 
-      {/* Ammount */}
+      {/* Amount */}
       <td className="min-w-[100px] px-3 py-2">
         <EditableCell
           value={receipt.amount?.toString() ?? ""}
           type="number"
           placeholder="-"
-          onChange={handleAmountSave}
+          onChange={(v) => handleFieldChange("amount", v)}
           className="text-right hover:bg-yellow-50"
         />
       </td>
@@ -206,6 +206,28 @@ export function ReceiptTableRow({
         <span className={`text-xs text-left ${receipt.currency && receipt.currency !== "JPY" ? "text-red-500" : ""}`}>
           {receipt.currency ?? "-"}
         </span>
+      </td>
+
+      {/* Account Category */}
+      <td className="min-w-[120px] px-3 py-2">
+        <EditableCell
+          value={receipt.accountCategory ?? ""}
+          type="select"
+          options={ACCOUNT_CATEGORIES}
+          onChange={(v) => handleFieldChange("accountCategory", v)}
+          className="hover:bg-yellow-50"
+        />
+      </td>
+
+      {/* Note */}
+      <td className="min-w-[150px] px-3 py-2">
+        <EditableCell
+          value={receipt.note ?? ""}
+          type="text"
+          placeholder="備考"
+          onChange={(v) => handleFieldChange("note", v)}
+          className="hover:bg-yellow-50"
+        />
       </td>
 
       {/* Validation */}

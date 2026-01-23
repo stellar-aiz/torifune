@@ -387,6 +387,14 @@ impl OcrProvider for GoogleDocumentAiProvider {
                         receipt_data.currency = Self::resolve_currency(currency_entity);
                     }
                 }
+
+                // 宛名を検索
+                if let Some(receiver_entity) = Self::find_entity(
+                    &entities,
+                    &["receiver_name", "ship_to_name", "bill_to_name", "customer_name"],
+                ) {
+                    receipt_data.receiver_name = Self::resolve_text(receiver_entity);
+                }
             }
         }
 

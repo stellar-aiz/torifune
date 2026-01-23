@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 interface EditableCellProps {
   value: string;
-  type: "text" | "date" | "number";
+  type: "text" | "date" | "number" | "select";
+  options?: readonly string[];
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
@@ -11,6 +12,7 @@ interface EditableCellProps {
 export function EditableCell({
   value,
   type,
+  options,
   placeholder = "",
   onChange,
   className = "",
@@ -18,6 +20,7 @@ export function EditableCell({
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
 
   // Sync edit value when external value changes
   useEffect(() => {
@@ -26,13 +29,17 @@ export function EditableCell({
     }
   }, [value, isEditing]);
 
-  // Auto-focus input when entering edit mode
+  // Auto-focus input/select when entering edit mode
   useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
+    if (isEditing) {
+      if (type === "select" && selectRef.current) {
+        selectRef.current.focus();
+      } else if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.select();
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, type]);
 
   const handleSave = useCallback(() => {
     setIsEditing(false);
@@ -64,6 +71,32 @@ export function EditableCell({
   }, []);
 
   if (isEditing) {
+    if (type === "select") {
+      return (
+        <select
+          ref={selectRef}
+          value={editValue}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            setEditValue(newValue);
+            setIsEditing(false);
+            if (newValue !== value) {
+              onChange(newValue);
+            }
+          }}
+          onBlur={() => setIsEditing(false)}
+          className={`w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${className}`}
+        >
+          <option value="">選択してください</option>
+          {options?.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
     return (
       <input
         ref={inputRef}

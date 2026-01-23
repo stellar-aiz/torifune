@@ -363,6 +363,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                             date: result.data.date,
                             amount: result.data.amount,
                             currency: result.data.currency,
+                            receiverName: result.data.receiverName,
                           };
                         } else {
                           return {
