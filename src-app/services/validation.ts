@@ -237,7 +237,7 @@ function validateEntertainmentNoteRequired(
         field: "note",
         type: "missing-field",
         severity: rule.severity,
-        message: "交際費は備考欄の記入が必須です",
+        message: "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
       };
     }
   }

@@ -98,9 +98,9 @@ export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[
   {
     type: "entertainment-note-required",
     name: "交際費備考必須",
-    description: "勘定科目が「交際費」の場合、備考欄が記入されていることを確認します",
+    description: "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
     enabled: true,
-    severity: "warning",
+    severity: "error",
     params: {},
     isBuiltIn: true,
   },

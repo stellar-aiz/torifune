@@ -171,7 +171,7 @@ function RuleItem({
               }
               ${!rule.enabled ? "cursor-not-allowed" : "cursor-pointer"}
             `}
-            title="エラー"
+            title="不正"
           >
             <FiXCircle className="w-3 h-3" />
           </button>
