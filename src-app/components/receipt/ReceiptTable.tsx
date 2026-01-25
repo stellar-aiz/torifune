@@ -21,8 +21,8 @@ export function ReceiptTable({
   onToggleSort,
 }: ReceiptTableProps) {
   const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] = useState(true);
-  const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] = useState(true);
-  const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(true);
+  const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] = useState(false);
+  const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(false);
 
   function SortIndicator({ field }: { field: SortField }): React.ReactElement {
     if (sortConfig.field !== field) {
