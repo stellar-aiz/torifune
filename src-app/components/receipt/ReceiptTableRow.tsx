@@ -77,7 +77,7 @@ export function ReceiptTableRow({
         return <FiCheckCircle className="w-4 h-4 text-green-500" />;
       case "error":
         return (
-          <Tooltip content={receipt.errorMessage ?? "OCRエラー"} position="top">
+          <Tooltip content={receipt.errorMessage ?? "OCRエラー"} position="right">
             <FiAlertCircle className="w-4 h-4 text-red-500" />
           </Tooltip>
         );
@@ -124,7 +124,7 @@ export function ReceiptTableRow({
     );
 
     return (
-      <Tooltip content={tooltipContent} position="top">
+      <Tooltip content={tooltipContent} position="left">
         <FiAlertTriangle
           className={`w-4 h-4 ${hasErrors ? "text-red-500" : "text-yellow-500"}`}
         />
