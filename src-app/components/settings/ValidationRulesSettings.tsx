@@ -13,6 +13,7 @@ import {
   FiFile,
   FiCopy,
   FiSettings,
+  FiEdit3,
 } from "react-icons/fi";
 import { useValidationRulesStore } from "../../hooks/useValidationRulesStore";
 import type { ValidationRule } from "../../types/validationRule";
@@ -51,6 +52,11 @@ const ruleTypeConfig: Record<
     icon: <FiCopy className="w-4 h-4" />,
     color: "text-sky-600",
     bgColor: "bg-sky-50",
+  },
+  "entertainment-note-required": {
+    icon: <FiEdit3 className="w-4 h-4" />,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50",
   },
 };
 
@@ -282,15 +288,17 @@ export function ValidationRulesSettings() {
     );
   }
 
-  // グループ化: 日付関連、金額関連、重複関連
+  // グループ化: 日付関連、金額関連、重複関連、勘定科目関連
   const dateRules = rules.filter((r) => r.type.startsWith("date-"));
   const amountRules = rules.filter((r) => r.type.startsWith("amount-"));
   const duplicateRules = rules.filter((r) => r.type.startsWith("duplicate-"));
+  const accountRules = rules.filter((r) => r.type.startsWith("entertainment-"));
 
   const ruleGroups = [
     { title: "日付チェック", rules: dateRules },
     { title: "金額チェック", rules: amountRules },
     { title: "重複チェック", rules: duplicateRules },
+    { title: "勘定科目チェック", rules: accountRules },
   ].filter((g) => g.rules.length > 0);
 
   return (

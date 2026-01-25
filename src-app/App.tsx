@@ -99,8 +99,8 @@ function App() {
   }, [currentMonth, currentReceipts]);
 
   // データ検証ハンドラ
-  const handleValidate = useCallback(() => {
-    const { warningCount, errorCount } = store.validateReceipts();
+  const handleValidate = useCallback(async () => {
+    const { warningCount, errorCount } = await store.validateReceipts();
     const totalIssues = warningCount + errorCount;
 
     if (totalIssues === 0) {

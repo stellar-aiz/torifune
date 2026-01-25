@@ -14,13 +14,15 @@ import type {
   SortField,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
-import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail, getAccountCategoryRules } from "../services/tauri/commands";
+import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail, getAccountCategoryRules, getValidationRules } from "../services/tauri/commands";
 import {
   readFileAsBase64,
   getMimeType,
   generateThumbnail,
 } from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
+import type { ValidationRule } from "../types/validationRule";
+import { mergeWithDefaultRules } from "../types/validationRule";
 import {
   loadApplicationMonths,
   loadApplicationMonthReceipts,
@@ -46,6 +48,21 @@ const debouncedSave = debounce((month: ApplicationMonth) => {
   });
 }, 500);
 
+/** バリデーションルールを読み込むヘルパー */
+async function loadValidationRules(): Promise<ValidationRule[]> {
+  try {
+    const settings = await getValidationRules();
+    if (settings && settings.rules && settings.rules.length > 0) {
+      // 新しい組み込みルールがあればマージ
+      const { rules } = mergeWithDefaultRules(settings.rules);
+      return rules;
+    }
+  } catch (error) {
+    console.warn("Failed to load validation rules:", error);
+  }
+  return [];
+}
+
 export interface ReceiptStoreState {
   months: ApplicationMonth[];
   currentMonthId: string | null;
@@ -65,7 +82,7 @@ export interface ReceiptStoreActions {
   updateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
   // OCR操作
   startOcr: () => Promise<void>;
-  validateReceipts: () => { warningCount: number; errorCount: number };
+  validateReceipts: () => Promise<{ warningCount: number; errorCount: number }>;
   clearCurrentMonth: () => void;
   // ソート操作
   toggleSort: (field: SortField) => void;
@@ -420,6 +437,9 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       // バッチOCR実行
       await batchOcrReceipts(requests);
 
+      // バリデーションルールを読み込み
+      const validationRules = await loadValidationRules();
+
       // バリデーション実行
       setMonths((prev) => {
         const updated = prev.map((m) => {
@@ -430,7 +450,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
           );
           if (successReceipts.length === 0) return m;
 
-          const validated = validateAllReceipts(successReceipts, currentYearMonth);
+          const validated = validateAllReceipts(successReceipts, currentYearMonth, validationRules);
 
           return {
             ...m,
@@ -504,34 +524,45 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   }, []);
 
   /** 手動バリデーション実行 */
-  const validateReceipts = useCallback((): { warningCount: number; errorCount: number } => {
+  const validateReceipts = useCallback(async (): Promise<{ warningCount: number; errorCount: number }> => {
     if (!currentMonthId || !currentYearMonth) {
       return { warningCount: 0, errorCount: 0 };
     }
 
+    // 現在の月のレシートを取得
+    const currentMonth = months.find((m) => m.id === currentMonthId);
+    if (!currentMonth) {
+      return { warningCount: 0, errorCount: 0 };
+    }
+
+    const successReceipts = currentMonth.receipts.filter((r) => r.status === "success");
+    if (successReceipts.length === 0) {
+      return { warningCount: 0, errorCount: 0 };
+    }
+
+    // バリデーションルールを読み込み
+    const validationRules = await loadValidationRules();
+
+    // 既存のissueをクリアしてから検証（setMonthsの外で実行）
+    const clearedReceipts = successReceipts.map((r) => ({ ...r, issues: undefined }));
+    const validated = validateAllReceipts(clearedReceipts, currentYearMonth, validationRules);
+
+    // カウントを計算（setMonthsの外で実行）
     let warningCount = 0;
     let errorCount = 0;
+    for (const receipt of validated) {
+      if (receipt.issues) {
+        for (const issue of receipt.issues) {
+          if (issue.severity === "warning") warningCount++;
+          if (issue.severity === "error") errorCount++;
+        }
+      }
+    }
 
+    // 状態を更新
     setMonths((prev) => {
       const updated = prev.map((m) => {
         if (m.id !== currentMonthId) return m;
-
-        const successReceipts = m.receipts.filter((r) => r.status === "success");
-        if (successReceipts.length === 0) return m;
-
-        // 既存のissueをクリアしてから検証
-        const clearedReceipts = successReceipts.map((r) => ({ ...r, issues: undefined }));
-        const validated = validateAllReceipts(clearedReceipts, currentYearMonth);
-
-        // Count issues
-        for (const receipt of validated) {
-          if (receipt.issues) {
-            for (const issue of receipt.issues) {
-              if (issue.severity === "warning") warningCount++;
-              if (issue.severity === "error") errorCount++;
-            }
-          }
-        }
 
         return {
           ...m,
@@ -543,16 +574,16 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       });
 
       // Auto-save after validation
-      const currentMonth = updated.find((m) => m.id === currentMonthId);
-      if (currentMonth) {
-        debouncedSave(currentMonth);
+      const updatedMonth = updated.find((m) => m.id === currentMonthId);
+      if (updatedMonth) {
+        debouncedSave(updatedMonth);
       }
 
       return updated;
     });
 
     return { warningCount, errorCount };
-  }, [currentMonthId, currentYearMonth]);
+  }, [currentMonthId, currentYearMonth, months]);
 
   return {
     months,

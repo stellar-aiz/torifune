@@ -8,7 +8,10 @@ import type {
   ValidationRule,
   ValidationRulesSettings,
 } from "../types/validationRule";
-import { getDefaultValidationRulesSettings } from "../types/validationRule";
+import {
+  getDefaultValidationRulesSettings,
+  mergeWithDefaultRules,
+} from "../types/validationRule";
 import {
   getValidationRules,
   saveValidationRules,
@@ -52,7 +55,18 @@ export function useValidationRulesStore(): UseValidationRulesStoreReturn {
     try {
       const settings = await getValidationRules();
       if (settings && settings.rules && settings.rules.length > 0) {
-        setRules(settings.rules);
+        // 新しい組み込みルールがあればマージ
+        const { rules: mergedRules, hasNewRules } = mergeWithDefaultRules(
+          settings.rules
+        );
+        if (hasNewRules) {
+          const updatedSettings: ValidationRulesSettings = {
+            rules: mergedRules,
+            version: settings.version,
+          };
+          await saveValidationRules(updatedSettings);
+        }
+        setRules(mergedRules);
       } else {
         // 初回起動時はデフォルトルールで初期化
         const defaultSettings = getDefaultValidationRulesSettings();

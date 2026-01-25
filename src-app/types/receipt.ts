@@ -4,8 +4,8 @@
 
 /** バリデーションイシュー */
 export interface ValidationIssue {
-  field: "date" | "amount" | "merchant" | "file" | "duplicate";
-  type: "format" | "range" | "outlier" | "duplicate-file" | "duplicate-data";
+  field: "date" | "amount" | "merchant" | "file" | "duplicate" | "note";
+  type: "format" | "range" | "outlier" | "duplicate-file" | "duplicate-data" | "missing-field";
   severity: "warning" | "error";
   message: string;
 }

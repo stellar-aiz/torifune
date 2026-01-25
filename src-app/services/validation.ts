@@ -223,6 +223,27 @@ function detectDataDuplicates(
   return null;
 }
 
+/** 交際費備考必須チェック */
+function validateEntertainmentNoteRequired(
+  accountCategory: string | undefined,
+  note: string | undefined,
+  rule: ValidationRule | undefined
+): ValidationIssue | null {
+  if (!rule?.enabled) return null;
+
+  if (accountCategory === "交際費") {
+    if (!note || !note.trim()) {
+      return {
+        field: "note",
+        type: "missing-field",
+        severity: rule.severity,
+        message: "交際費は備考欄の記入が必須です",
+      };
+    }
+  }
+  return null;
+}
+
 /** 単一レシートのバリデーション */
 export function validateReceipt(
   receipt: ReceiptData,
@@ -281,6 +302,15 @@ export function validateReceipt(
     duplicateDataRule
   );
   if (dataDuplicateIssue) issues.push(dataDuplicateIssue);
+
+  // 交際費備考必須チェック
+  const entertainmentNoteRule = findRule(effectiveRules, "entertainment-note-required");
+  const entertainmentNoteIssue = validateEntertainmentNoteRequired(
+    receipt.accountCategory,
+    receipt.note,
+    entertainmentNoteRule
+  );
+  if (entertainmentNoteIssue) issues.push(entertainmentNoteIssue);
 
   return issues;
 }

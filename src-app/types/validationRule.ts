@@ -10,6 +10,7 @@ export type ValidationRuleType =
   | "amount-outlier"
   | "duplicate-file"
   | "duplicate-data"
+  | "entertainment-note-required"
   | "custom";
 
 /** バリデーションルール */
@@ -94,6 +95,15 @@ export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[
     params: {},
     isBuiltIn: true,
   },
+  {
+    type: "entertainment-note-required",
+    name: "交際費備考必須",
+    description: "勘定科目が「交際費」の場合、備考欄が記入されていることを確認します",
+    enabled: true,
+    severity: "warning",
+    params: {},
+    isBuiltIn: true,
+  },
 ];
 
 /** 新規ルールを作成するためのヘルパー */
@@ -112,6 +122,27 @@ export function getDefaultValidationRulesSettings(): ValidationRulesSettings {
   return {
     rules: DEFAULT_VALIDATION_RULES.map((rule) => createValidationRule(rule)),
     version: 1,
+  };
+}
+
+/** 既存ルールに不足している組み込みルールをマージ */
+export function mergeWithDefaultRules(existingRules: ValidationRule[]): {
+  rules: ValidationRule[];
+  hasNewRules: boolean;
+} {
+  const existingTypes = new Set(existingRules.map((r) => r.type));
+  const missingDefaults = DEFAULT_VALIDATION_RULES.filter(
+    (d) => !existingTypes.has(d.type)
+  );
+
+  if (missingDefaults.length === 0) {
+    return { rules: existingRules, hasNewRules: false };
+  }
+
+  const newRules = missingDefaults.map((rule) => createValidationRule(rule));
+  return {
+    rules: [...existingRules, ...newRules],
+    hasNewRules: true,
   };
 }
 
