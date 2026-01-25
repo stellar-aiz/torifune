@@ -22,6 +22,8 @@ interface ReceiptTableRowProps {
   onRemove: () => void;
   onUpdate: (updates: Partial<ReceiptData>) => void;
   isFilenameCollapsed: boolean;
+  isMerchantCollapsed: boolean;
+  isReceiverNameCollapsed: boolean;
 }
 
 export function ReceiptTableRow({
@@ -30,6 +32,8 @@ export function ReceiptTableRow({
   onRemove,
   onUpdate,
   isFilenameCollapsed,
+  isMerchantCollapsed,
+  isReceiverNameCollapsed,
 }: ReceiptTableRowProps) {
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
@@ -180,25 +184,43 @@ export function ReceiptTableRow({
       </td>
 
       {/* Merchant */}
-      <td className="min-w-[140px] px-2 py-1.5">
-        <EditableCell
-          value={receipt.merchant ?? ""}
-          type="text"
-          placeholder="-"
-          onChange={(v) => handleFieldChange("merchant", v)}
-          className="hover:bg-yellow-50"
-        />
+      <td
+        className={`${isMerchantCollapsed ? "w-[40px]" : "min-w-[140px]"} px-2 py-1.5 transition-all duration-200`}
+        title={receipt.merchant ?? ""}
+      >
+        {isMerchantCollapsed ? (
+          <div className="text-sm text-gray-600 truncate text-center">
+            {receipt.merchant ? receipt.merchant.substring(0, 2) : "-"}
+          </div>
+        ) : (
+          <EditableCell
+            value={receipt.merchant ?? ""}
+            type="text"
+            placeholder="-"
+            onChange={(v) => handleFieldChange("merchant", v)}
+            className="hover:bg-yellow-50"
+          />
+        )}
       </td>
 
       {/* Receiver Name */}
-      <td className="min-w-[100px] px-2 py-1.5">
-        <EditableCell
-          value={receipt.receiverName ?? ""}
-          type="text"
-          placeholder="宛名"
-          onChange={(v) => handleFieldChange("receiverName", v)}
-          className="hover:bg-yellow-50"
-        />
+      <td
+        className={`${isReceiverNameCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 transition-all duration-200`}
+        title={receipt.receiverName ?? ""}
+      >
+        {isReceiverNameCollapsed ? (
+          <div className="text-sm text-gray-600 truncate text-center">
+            {receipt.receiverName ? receipt.receiverName.substring(0, 2) : "-"}
+          </div>
+        ) : (
+          <EditableCell
+            value={receipt.receiverName ?? ""}
+            type="text"
+            placeholder="宛名"
+            onChange={(v) => handleFieldChange("receiverName", v)}
+            className="hover:bg-yellow-50"
+          />
+        )}
       </td>
 
       {/* Amount */}

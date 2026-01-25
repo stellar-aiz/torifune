@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiChevronRight, FiChevronDown, FiFile } from "react-icons/fi";
+import { FiChevronRight, FiChevronDown, FiFile, FiShoppingBag, FiUser } from "react-icons/fi";
 import { ReceiptTableRow } from "./ReceiptTableRow";
 import type { ReceiptData, SortConfig, SortField } from "../../types/receipt";
 
@@ -21,6 +21,8 @@ export function ReceiptTable({
   onToggleSort,
 }: ReceiptTableProps) {
   const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] = useState(true);
+  const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] = useState(true);
+  const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(true);
 
   function SortIndicator({ field }: { field: SortField }): React.ReactElement {
     if (sortConfig.field !== field) {
@@ -67,14 +69,40 @@ export function ReceiptTable({
               <SortIndicator field="date" />
             </th>
             <th
-              className="min-w-[140px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
-              onClick={() => onToggleSort("merchant")}
+              className={`${isMerchantColumnCollapsed ? "w-[40px]" : "min-w-[140px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
+              onClick={() => setIsMerchantColumnCollapsed(!isMerchantColumnCollapsed)}
             >
-              店舗
-              <SortIndicator field="merchant" />
+              <div className="flex items-center gap-1">
+                {isMerchantColumnCollapsed ? (
+                  <>
+                    <FiChevronRight className="w-3 h-3" />
+                    <FiShoppingBag className="w-3 h-3" />
+                  </>
+                ) : (
+                  <>
+                    <FiChevronDown className="w-3 h-3" />
+                    <span>店舗</span>
+                  </>
+                )}
+              </div>
             </th>
-            <th className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
-              宛名
+            <th
+              className={`${isReceiverNameColumnCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
+              onClick={() => setIsReceiverNameColumnCollapsed(!isReceiverNameColumnCollapsed)}
+            >
+              <div className="flex items-center gap-1">
+                {isReceiverNameColumnCollapsed ? (
+                  <>
+                    <FiChevronRight className="w-3 h-3" />
+                    <FiUser className="w-3 h-3" />
+                  </>
+                ) : (
+                  <>
+                    <FiChevronDown className="w-3 h-3" />
+                    <span>宛名</span>
+                  </>
+                )}
+              </div>
             </th>
             <th
               className="min-w-[80px] px-2 py-1.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
@@ -109,6 +137,8 @@ export function ReceiptTable({
               onRemove={() => onRemove(receipt.id)}
               onUpdate={(updates) => onUpdateReceipt(receipt.id, updates)}
               isFilenameCollapsed={isFilenameColumnCollapsed}
+              isMerchantCollapsed={isMerchantColumnCollapsed}
+              isReceiverNameCollapsed={isReceiverNameColumnCollapsed}
             />
           ))}
         </tbody>
