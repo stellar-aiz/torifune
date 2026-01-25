@@ -28,6 +28,7 @@ export function EditableCell({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const isComposingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -85,7 +86,7 @@ export function EditableCell({
         setHighlightedIndex((prev) =>
           prev > 0 ? prev - 1 : allOptions.length - 1
         );
-      } else if (e.key === "Enter") {
+      } else if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < allOptions.length) {
           const selected = allOptions[highlightedIndex];
@@ -124,6 +125,10 @@ export function EditableCell({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Skip if IME composition is in progress (keyCode 229 is IME processing)
+      if (isComposingRef.current || e.nativeEvent.isComposing || e.keyCode === 229) {
+        return;
+      }
       if (e.key === "Enter") {
         e.preventDefault();
         handleSave();
@@ -239,6 +244,8 @@ export function EditableCell({
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
+        onCompositionStart={() => { isComposingRef.current = true; }}
+        onCompositionEnd={() => { isComposingRef.current = false; }}
         className={`w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${className}`}
       />
     );

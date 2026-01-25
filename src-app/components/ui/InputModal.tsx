@@ -25,6 +25,7 @@ export function InputModal({
 }: InputModalProps) {
   const [inputValue, setInputValue] = useState(defaultValue);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isComposingRef = useRef(false);
 
   // Reset input value when modal opens with new defaultValue
   useEffect(() => {
@@ -50,6 +51,14 @@ export function InputModal({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if IME composition is in progress (keyCode 229 is IME processing)
+      if (isComposingRef.current || e.isComposing || e.keyCode === 229) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onCancel();
+        }
+        return;
+      }
       if (e.key === "Escape") {
         e.preventDefault();
         onCancel();
@@ -97,6 +106,8 @@ export function InputModal({
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
+          onCompositionStart={() => { isComposingRef.current = true; }}
+          onCompositionEnd={() => { isComposingRef.current = false; }}
           placeholder={placeholder}
           className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
         />
