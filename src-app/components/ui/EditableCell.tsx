@@ -1,5 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { FiChevronDown } from "react-icons/fi";
+import { InputModal } from "./InputModal";
+
+const CUSTOM_INPUT_OPTION = "その他（手入力）";
 
 interface EditableCellProps {
   value: string;
@@ -8,6 +11,7 @@ interface EditableCellProps {
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
+  allowCustomInput?: boolean;
 }
 
 export function EditableCell({
@@ -17,14 +21,22 @@ export function EditableCell({
   placeholder = "",
   onChange,
   className = "",
+  allowCustomInput = false,
 }: EditableCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Memoize options array to avoid recomputation
+  const allOptions = useMemo(() => {
+    const baseOptions = ["", ...(options ?? [])];
+    return allowCustomInput ? [...baseOptions, CUSTOM_INPUT_OPTION] : baseOptions;
+  }, [options, allowCustomInput]);
 
   // Sync edit value when external value changes
   useEffect(() => {
@@ -59,7 +71,6 @@ export function EditableCell({
   // Keyboard handler for dropdown
   useEffect(() => {
     if (!isDropdownOpen) return;
-    const allOptions = ["", ...(options ?? [])];
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -79,22 +90,25 @@ export function EditableCell({
         if (highlightedIndex >= 0 && highlightedIndex < allOptions.length) {
           const selected = allOptions[highlightedIndex];
           setIsDropdownOpen(false);
-          if (selected !== value) onChange(selected);
+          if (selected === CUSTOM_INPUT_OPTION) {
+            setIsModalOpen(true);
+          } else if (selected !== value) {
+            onChange(selected);
+          }
         }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isDropdownOpen, highlightedIndex, options, value, onChange]);
+  }, [isDropdownOpen, highlightedIndex, allOptions, value, onChange]);
 
   // Reset highlightedIndex when dropdown opens
   useEffect(() => {
     if (isDropdownOpen) {
-      const allOptions = ["", ...(options ?? [])];
       const currentIndex = allOptions.indexOf(value);
       setHighlightedIndex(currentIndex >= 0 ? currentIndex : -1);
     }
-  }, [isDropdownOpen, options, value]);
+  }, [isDropdownOpen, allOptions, value]);
 
   const handleSave = useCallback(() => {
     setIsEditing(false);
@@ -121,15 +135,14 @@ export function EditableCell({
     [handleSave, handleCancel]
   );
 
-  const handleClick = useCallback(() => {
+  const handleClick = () => {
     setIsEditing(true);
-  }, []);
+  };
 
   // Select type: custom dropdown (single click to open)
   if (type === "select") {
     const selectDisplayValue = value || placeholder || "選択";
     const selectIsEmpty = !value;
-    const allOptions = ["", ...(options ?? [])];
 
     let dropdownStyle: React.CSSProperties = {};
     if (isDropdownOpen && triggerRef.current) {
@@ -174,27 +187,44 @@ export function EditableCell({
             style={dropdownStyle}
             className="z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-[280px] overflow-y-auto py-1"
           >
-            {allOptions.map((option, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  if (option !== value) onChange(option);
-                }}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                className={`px-3 py-1.5 text-sm cursor-pointer ${
-                  option === value
-                    ? "bg-blue-50 text-blue-700 font-medium"
-                    : highlightedIndex === index
-                      ? "bg-gray-100 text-gray-800"
-                      : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                {option || "選択なし"}
-              </div>
-            ))}
+            {allOptions.map((option, index) => {
+              const getOptionStyle = (): string => {
+                if (option === value) return "bg-blue-50 text-blue-700 font-medium";
+                if (highlightedIndex === index) return "bg-gray-100 text-gray-800";
+                return "text-gray-700 hover:bg-gray-50";
+              };
+              return (
+                <div
+                  key={index}
+                  onClick={() => {
+                    setIsDropdownOpen(false);
+                    if (option === CUSTOM_INPUT_OPTION) {
+                      setIsModalOpen(true);
+                    } else if (option !== value) {
+                      onChange(option);
+                    }
+                  }}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                  className={`px-3 py-1.5 text-sm cursor-pointer ${getOptionStyle()}`}
+                >
+                  {option || "選択なし"}
+                </div>
+              );
+            })}
           </div>
         )}
+
+        <InputModal
+          isOpen={isModalOpen}
+          title="通貨コードを入力"
+          placeholder="例: CHF"
+          defaultValue={value}
+          onConfirm={(v) => {
+            setIsModalOpen(false);
+            if (v !== value) onChange(v);
+          }}
+          onCancel={() => setIsModalOpen(false)}
+        />
       </div>
     );
   }

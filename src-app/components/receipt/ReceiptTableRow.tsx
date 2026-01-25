@@ -13,6 +13,7 @@ import { ThumbnailPreview } from "../ui/ThumbnailPreview";
 import { Tooltip } from "../ui/Tooltip";
 import type { ReceiptData } from "../../types/receipt";
 import { ACCOUNT_CATEGORIES } from "../../constants/accountCategories";
+import { CURRENCIES } from "../../constants/currencies";
 import { generateThumbnail } from "../../services/pdf/pdfExtractor";
 import { saveThumbnail } from "../../services/tauri/commands";
 
@@ -236,9 +237,15 @@ export function ReceiptTableRow({
 
       {/* Currency */}
       <td className="w-fit px-2 py-1.5">
-        <span className={`text-xs text-left ${receipt.currency && receipt.currency !== "JPY" ? "text-red-500" : ""}`}>
-          {receipt.currency ?? "-"}
-        </span>
+        <EditableCell
+          value={receipt.currency ?? ""}
+          type="select"
+          options={CURRENCIES}
+          allowCustomInput={true}
+          placeholder="-"
+          onChange={(v) => handleFieldChange("currency", v)}
+          className={`text-xs hover:bg-yellow-50 ${receipt.currency && receipt.currency !== "JPY" ? "text-red-500" : ""}`}
+        />
       </td>
 
       {/* Account Category */}
