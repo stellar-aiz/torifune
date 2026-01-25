@@ -23,13 +23,28 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["dmg", "app", "nsis", "msi"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "Finance",
+    "shortDescription": "Receipt image/PDF analyzer with OCR",
+    "longDescription": "Torifune is a desktop application for analyzing receipt images and PDFs using OCR technology. It helps you manage and organize your financial documents efficiently.",
+    "copyright": "Copyright (c) 2025 Stellar",
+    "publisher": "Stellar",
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper" },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["Japanese", "English"]
+      }
+    }
   }
 }

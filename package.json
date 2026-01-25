@@ -8,11 +8,20 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:debug": "tauri build --debug",
     "test": "vitest",
     "test:run": "vitest run",
     "lint": "pnpm lint:ts && pnpm lint:rust",
     "lint:ts": "tsc --noEmit",
-    "lint:rust": "cd src-tauri && cargo clippy -- -D warnings"
+    "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
+    "fmt": "pnpm fmt:ts && pnpm fmt:rust",
+    "fmt:ts": "prettier --write 'src-app/**/*.{ts,tsx}'",
+    "fmt:rust": "cd src-tauri && cargo fmt",
+    "fmt:check": "pnpm fmt:check:ts && pnpm fmt:check:rust",
+    "fmt:check:ts": "prettier --check 'src-app/**/*.{ts,tsx}'",
+    "fmt:check:rust": "cd src-tauri && cargo fmt --check"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -29,6 +38,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "prettier": "^3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/node": "^22",
