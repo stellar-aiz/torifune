@@ -14,7 +14,7 @@ import type {
   SortField,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
-import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail } from "../services/tauri/commands";
+import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail, getAccountCategoryRules } from "../services/tauri/commands";
 import {
   readFileAsBase64,
   getMimeType,
@@ -26,6 +26,8 @@ import {
   loadApplicationMonthReceipts,
   saveApplicationMonth,
 } from "../services/persistence";
+import { matchAccountCategory } from "../services/accountCategoryMatcher";
+import type { AccountCategoryRule } from "../types/accountCategoryRule";
 
 function debounce<Args extends unknown[]>(
   fn: (...args: Args) => void,
@@ -321,6 +323,17 @@ export function useReceiptStore(): UseReceiptStoreReturn {
 
     setIsProcessing(true);
 
+    // 勘定科目ルールを読み込み
+    let accountCategoryRules: AccountCategoryRule[] = [];
+    try {
+      const rulesSettings = await getAccountCategoryRules();
+      if (rulesSettings?.rules) {
+        accountCategoryRules = rulesSettings.rules;
+      }
+    } catch (error) {
+      console.warn("Failed to load account category rules:", error);
+    }
+
     // すべてのpendingレシートをprocessingに更新
     setMonths((prev) =>
       prev.map((m) =>
@@ -356,6 +369,14 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                         if (r.id !== targetReceipt.id) return r;
 
                         if (result.success && result.data) {
+                          // 勘定科目の自動推測（既存値がなければマッチング）
+                          let accountCategory = r.accountCategory;
+                          if (!accountCategory && result.data.merchant) {
+                            accountCategory = matchAccountCategory(
+                              result.data.merchant,
+                              accountCategoryRules
+                            );
+                          }
                           return {
                             ...r,
                             status: "success" as const,
@@ -364,6 +385,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                             amount: result.data.amount,
                             currency: result.data.currency,
                             receiverName: result.data.receiverName,
+                            accountCategory,
                           };
                         } else {
                           return {

@@ -152,3 +152,17 @@ export async function readThumbnail(
 export async function moveToTrash(path: string): Promise<void> {
   await invoke<void>("move_to_trash", { path });
 }
+
+import type { AccountCategoryRulesSettings } from "../../types/accountCategoryRule";
+
+/** 勘定科目ルール設定を取得 */
+export async function getAccountCategoryRules(): Promise<AccountCategoryRulesSettings | null> {
+  return invoke<AccountCategoryRulesSettings | null>("get_account_category_rules");
+}
+
+/** 勘定科目ルール設定を保存 */
+export async function saveAccountCategoryRules(
+  settings: AccountCategoryRulesSettings
+): Promise<void> {
+  return invoke<void>("save_account_category_rules", { settings });
+}

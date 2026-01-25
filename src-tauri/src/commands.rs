@@ -5,6 +5,7 @@
 use crate::providers::{OcrProgressEvent, OcrProviderRegistry, OcrResult, OcrSettings};
 use futures::future::join_all;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -676,4 +677,34 @@ pub async fn copy_file_to_month(
         destination_path: final_destination.to_str().unwrap_or("").to_string(),
         file_name: final_file_name,
     })
+}
+
+/// 勘定科目ルール設定を取得
+#[tauri::command]
+pub async fn get_account_category_rules(app: AppHandle) -> Result<Value, String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    let settings = store
+        .get("account_category_rules")
+        .unwrap_or(Value::Null);
+
+    Ok(settings)
+}
+
+/// 勘定科目ルール設定を保存
+#[tauri::command]
+pub async fn save_account_category_rules(app: AppHandle, settings: Value) -> Result<(), String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    store.set("account_category_rules", settings);
+
+    store
+        .save()
+        .map_err(|e| format!("設定の保存に失敗しました: {}", e))?;
+
+    Ok(())
 }
