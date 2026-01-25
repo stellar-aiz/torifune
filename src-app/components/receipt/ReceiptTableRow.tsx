@@ -21,6 +21,7 @@ interface ReceiptTableRowProps {
   yearMonth: string;
   onRemove: () => void;
   onUpdate: (updates: Partial<ReceiptData>) => void;
+  isFilenameCollapsed: boolean;
 }
 
 export function ReceiptTableRow({
@@ -28,6 +29,7 @@ export function ReceiptTableRow({
   yearMonth,
   onRemove,
   onUpdate,
+  isFilenameCollapsed,
 }: ReceiptTableRowProps) {
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
 
@@ -137,13 +139,22 @@ export function ReceiptTableRow({
       `}
     >
       {/* Filename */}
-      <td className="min-w-[160px] px-2 py-1.5">
-        <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <span className="text-sm text-gray-800 truncate" title={receipt.file}>
-            {receipt.file}
-          </span>
-        </div>
+      <td
+        className={`${isFilenameCollapsed ? "w-[40px]" : "min-w-[160px]"} px-2 py-1.5 transition-all duration-200`}
+        title={receipt.file}
+      >
+        {isFilenameCollapsed ? (
+          <div className="flex items-center justify-center">
+            {getStatusIcon()}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {getStatusIcon()}
+            <span className="text-sm text-gray-800 truncate">
+              {receipt.file}
+            </span>
+          </div>
+        )}
       </td>
 
       {/* Thumbnail */}

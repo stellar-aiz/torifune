@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { FiChevronRight, FiChevronDown, FiFile } from "react-icons/fi";
 import { ReceiptTableRow } from "./ReceiptTableRow";
 import type { ReceiptData, SortConfig, SortField } from "../../types/receipt";
 
@@ -18,6 +20,8 @@ export function ReceiptTable({
   sortConfig,
   onToggleSort,
 }: ReceiptTableProps) {
+  const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] = useState(true);
+
   function SortIndicator({ field }: { field: SortField }): React.ReactElement {
     if (sortConfig.field !== field) {
       return <span className="ml-1 text-gray-300">⇅</span>;
@@ -34,8 +38,23 @@ export function ReceiptTable({
       <table className="w-full border-collapse min-w-[640px]">
         <thead>
           <tr className="bg-gray-100 border-b border-gray-200 sticky top-0">
-            <th className="min-w-[160px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
-              ファイル名
+            <th
+              className={`${isFilenameColumnCollapsed ? "w-[40px]" : "min-w-[160px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
+              onClick={() => setIsFilenameColumnCollapsed(!isFilenameColumnCollapsed)}
+            >
+              <div className="flex items-center gap-1">
+                {isFilenameColumnCollapsed ? (
+                  <>
+                    <FiChevronRight className="w-3 h-3" />
+                    <FiFile className="w-3 h-3" />
+                  </>
+                ) : (
+                  <>
+                    <FiChevronDown className="w-3 h-3" />
+                    <span>ファイル名</span>
+                  </>
+                )}
+              </div>
             </th>
             <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
               {/* サムネイル */}
@@ -89,6 +108,7 @@ export function ReceiptTable({
               yearMonth={yearMonth}
               onRemove={() => onRemove(receipt.id)}
               onUpdate={(updates) => onUpdateReceipt(receipt.id, updates)}
+              isFilenameCollapsed={isFilenameColumnCollapsed}
             />
           ))}
         </tbody>
