@@ -708,3 +708,33 @@ pub async fn save_account_category_rules(app: AppHandle, settings: Value) -> Res
 
     Ok(())
 }
+
+/// バリデーションルール設定を取得
+#[tauri::command]
+pub async fn get_validation_rules(app: AppHandle) -> Result<Value, String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    let rules = store
+        .get("validation_rules")
+        .unwrap_or(Value::Null);
+
+    Ok(rules)
+}
+
+/// バリデーションルール設定を保存
+#[tauri::command]
+pub async fn save_validation_rules(app: AppHandle, rules: Value) -> Result<(), String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    store.set("validation_rules", rules);
+
+    store
+        .save()
+        .map_err(|e| format!("設定の保存に失敗しました: {}", e))?;
+
+    Ok(())
+}

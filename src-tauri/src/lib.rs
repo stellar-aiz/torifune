@@ -36,6 +36,8 @@ pub fn run() {
             commands::move_to_trash,
             commands::get_account_category_rules,
             commands::save_account_category_rules,
+            commands::get_validation_rules,
+            commands::save_validation_rules,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

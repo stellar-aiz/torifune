@@ -154,6 +154,7 @@ export async function moveToTrash(path: string): Promise<void> {
 }
 
 import type { AccountCategoryRulesSettings } from "../../types/accountCategoryRule";
+import type { ValidationRulesSettings } from "../../types/validationRule";
 
 /** 勘定科目ルール設定を取得 */
 export async function getAccountCategoryRules(): Promise<AccountCategoryRulesSettings | null> {
@@ -165,4 +166,16 @@ export async function saveAccountCategoryRules(
   settings: AccountCategoryRulesSettings
 ): Promise<void> {
   return invoke<void>("save_account_category_rules", { settings });
+}
+
+/** バリデーションルール設定を取得 */
+export async function getValidationRules(): Promise<ValidationRulesSettings | null> {
+  return invoke<ValidationRulesSettings | null>("get_validation_rules");
+}
+
+/** バリデーションルール設定を保存 */
+export async function saveValidationRules(
+  settings: ValidationRulesSettings
+): Promise<void> {
+  return invoke<void>("save_validation_rules", { rules: settings });
 }
