@@ -45,11 +45,10 @@ pub async fn save_ocr_settings(app: AppHandle, settings: OcrSettings) -> Result<
         .store("torifune.store.json")
         .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
 
-    store
-        .set(
-            "ocr_settings",
-            serde_json::to_value(&settings).map_err(|e| e.to_string())?,
-        );
+    store.set(
+        "ocr_settings",
+        serde_json::to_value(&settings).map_err(|e| e.to_string())?,
+    );
 
     store
         .save()
@@ -194,7 +193,10 @@ pub async fn batch_ocr_receipts(
     indexed_results.sort_by_key(|(index, _)| *index);
 
     // 結果のみを抽出
-    let results = indexed_results.into_iter().map(|(_, result)| result).collect();
+    let results = indexed_results
+        .into_iter()
+        .map(|(_, result)| result)
+        .collect();
 
     Ok(results)
 }
@@ -355,10 +357,7 @@ pub async fn list_month_directories(app: AppHandle) -> Result<Vec<MonthDirectory
             continue;
         }
 
-        let year_name = year_path
-            .file_name()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
+        let year_name = year_path.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
         // 4桁の数字（年）かチェック
         if year_name.len() != 4 || year_name.parse::<u32>().is_err() {
@@ -429,8 +428,8 @@ pub async fn list_files_in_directory(directory_path: String) -> Result<Vec<FileI
         return Ok(Vec::new());
     }
 
-    let entries = fs::read_dir(&path)
-        .map_err(|e| format!("ディレクトリの読み込みに失敗しました: {}", e))?;
+    let entries =
+        fs::read_dir(&path).map_err(|e| format!("ディレクトリの読み込みに失敗しました: {}", e))?;
 
     let mut files = Vec::new();
 
@@ -589,8 +588,8 @@ pub async fn read_thumbnail(
     }
 
     // ファイルを読み込み
-    let image_data = fs::read(&file_path)
-        .map_err(|e| format!("サムネイルの読み込みに失敗しました: {}", e))?;
+    let image_data =
+        fs::read(&file_path).map_err(|e| format!("サムネイルの読み込みに失敗しました: {}", e))?;
 
     // Base64エンコードしてDataURL形式で返す
     use base64::{engine::general_purpose::STANDARD, Engine};
@@ -641,10 +640,7 @@ pub async fn copy_file_to_month(
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("file");
-        let extension = source
-            .extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
+        let extension = source.extension().and_then(|s| s.to_str()).unwrap_or("");
 
         let mut counter = 1;
         loop {
@@ -686,9 +682,7 @@ pub async fn get_account_category_rules(app: AppHandle) -> Result<Value, String>
         .store("torifune.store.json")
         .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
 
-    let settings = store
-        .get("account_category_rules")
-        .unwrap_or(Value::Null);
+    let settings = store.get("account_category_rules").unwrap_or(Value::Null);
 
     Ok(settings)
 }
@@ -716,9 +710,7 @@ pub async fn get_validation_rules(app: AppHandle) -> Result<Value, String> {
         .store("torifune.store.json")
         .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
 
-    let rules = store
-        .get("validation_rules")
-        .unwrap_or(Value::Null);
+    let rules = store.get("validation_rules").unwrap_or(Value::Null);
 
     Ok(rules)
 }

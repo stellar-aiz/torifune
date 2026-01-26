@@ -98,7 +98,10 @@ impl GoogleDocumentAiProvider {
     }
 
     /// アクセストークンを取得
-    async fn fetch_access_token(&self, service_account: &ServiceAccountKey) -> Result<String, String> {
+    async fn fetch_access_token(
+        &self,
+        service_account: &ServiceAccountKey,
+    ) -> Result<String, String> {
         let token_uri = service_account
             .token_uri
             .as_deref()
@@ -199,14 +202,12 @@ impl GoogleDocumentAiProvider {
             }
         }
         // フォールバック：mention_text を通貨コードに変換
-        entity.mention_text.as_ref().map(|s| {
-            match s.trim() {
-                "¥" | "\\" | "￥" => "JPY".to_string(),
-                "$" => "USD".to_string(),
-                "€" => "EUR".to_string(),
-                "£" => "GBP".to_string(),
-                other => other.to_string(),
-            }
+        entity.mention_text.as_ref().map(|s| match s.trim() {
+            "¥" | "\\" | "￥" => "JPY".to_string(),
+            "$" => "USD".to_string(),
+            "€" => "EUR".to_string(),
+            "£" => "GBP".to_string(),
+            other => other.to_string(),
         })
     }
 
@@ -231,7 +232,10 @@ impl GoogleDocumentAiProvider {
         }
 
         if let Some(ref mention) = entity.mention_text {
-            let digits: String = mention.chars().filter(|c| c.is_ascii_digit() || *c == '.').collect();
+            let digits: String = mention
+                .chars()
+                .filter(|c| c.is_ascii_digit() || *c == '.')
+                .collect();
             if let Ok(value) = digits.parse::<f64>() {
                 return (Some(value), None);
             }
@@ -274,9 +278,8 @@ impl OcrProvider for GoogleDocumentAiProvider {
             return Err("設定が不完全です".to_string());
         }
 
-        let service_account = Self::parse_service_account(
-            settings.service_account_json.as_ref().unwrap(),
-        )?;
+        let service_account =
+            Self::parse_service_account(settings.service_account_json.as_ref().unwrap())?;
 
         // アクセストークンを取得してテスト
         let _token = self.fetch_access_token(&service_account).await?;
@@ -299,9 +302,8 @@ impl OcrProvider for GoogleDocumentAiProvider {
         let location = settings.location.as_deref().unwrap_or("us");
         let processor_id = settings.processor_id.as_ref().unwrap();
 
-        let service_account = Self::parse_service_account(
-            settings.service_account_json.as_ref().unwrap(),
-        )?;
+        let service_account =
+            Self::parse_service_account(settings.service_account_json.as_ref().unwrap())?;
 
         let access_token = self.fetch_access_token(&service_account).await?;
 
@@ -356,7 +358,12 @@ impl OcrProvider for GoogleDocumentAiProvider {
                 // 店舗名を検索
                 if let Some(merchant_entity) = Self::find_entity(
                     &entities,
-                    &["merchant_name", "supplier_name", "vendor_name", "receipt_merchant_name"],
+                    &[
+                        "merchant_name",
+                        "supplier_name",
+                        "vendor_name",
+                        "receipt_merchant_name",
+                    ],
                 ) {
                     receipt_data.merchant = Self::resolve_text(merchant_entity);
                 }
@@ -364,7 +371,13 @@ impl OcrProvider for GoogleDocumentAiProvider {
                 // 日付を検索
                 if let Some(date_entity) = Self::find_entity(
                     &entities,
-                    &["receipt_date", "purchase_date", "transaction_date", "invoice_date", "date"],
+                    &[
+                        "receipt_date",
+                        "purchase_date",
+                        "transaction_date",
+                        "invoice_date",
+                        "date",
+                    ],
                 ) {
                     receipt_data.date = Self::resolve_text(date_entity);
                 }
@@ -381,9 +394,7 @@ impl OcrProvider for GoogleDocumentAiProvider {
 
                 // 通貨が取得できなかった場合、独立したcurrencyエンティティを検索
                 if receipt_data.currency.is_none() {
-                    if let Some(currency_entity) =
-                        Self::find_entity(&entities, &["currency"])
-                    {
+                    if let Some(currency_entity) = Self::find_entity(&entities, &["currency"]) {
                         receipt_data.currency = Self::resolve_currency(currency_entity);
                     }
                 }
@@ -391,7 +402,12 @@ impl OcrProvider for GoogleDocumentAiProvider {
                 // 宛名を検索
                 if let Some(receiver_entity) = Self::find_entity(
                     &entities,
-                    &["receiver_name", "ship_to_name", "bill_to_name", "customer_name"],
+                    &[
+                        "receiver_name",
+                        "ship_to_name",
+                        "bill_to_name",
+                        "customer_name",
+                    ],
                 ) {
                     receipt_data.receiver_name = Self::resolve_text(receiver_entity);
                 }

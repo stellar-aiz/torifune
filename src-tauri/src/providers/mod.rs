@@ -169,6 +169,9 @@ impl OcrProviderRegistry {
     /// 利用可能なプロバイダー名一覧を取得
     #[allow(dead_code)]
     pub fn list_providers(&self) -> Vec<String> {
-        self.providers.iter().map(|p| p.name().to_string()).collect()
+        self.providers
+            .iter()
+            .map(|p| p.name().to_string())
+            .collect()
     }
 }
