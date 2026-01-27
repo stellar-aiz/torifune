@@ -43,37 +43,6 @@ jobs:
           name: macos-arm64
           path: src-tauri/target/release/bundle/dmg/*.dmg
 
-  build-macos-x64:
-    needs: ci
-    runs-on: macos-15-intel
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-          cache: 'pnpm'
-
-      - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build Tauri app
-        run: pnpm tauri build
-
-      - name: Upload macOS x64 artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-x64
-          path: src-tauri/target/release/bundle/dmg/*.dmg
-
   build-windows:
     needs: ci
     runs-on: windows-latest
@@ -108,7 +77,6 @@ jobs:
   release:
     needs:
       - build-macos-arm64
-      - build-macos-x64
       - build-windows
     runs-on: ubuntu-latest
     steps:
@@ -117,12 +85,6 @@ jobs:
         with:
           name: macos-arm64
           path: artifacts/macos-arm64
-
-      - name: Download macOS x64 artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-x64
-          path: artifacts/macos-x64
 
       - name: Download Windows NSIS artifacts
         uses: actions/download-artifact@v4
@@ -136,5 +98,4 @@ jobs:
           draft: true
           files: |
             artifacts/macos-arm64/*.dmg
-            artifacts/macos-x64/*.dmg
             artifacts/windows-nsis/*.exe
