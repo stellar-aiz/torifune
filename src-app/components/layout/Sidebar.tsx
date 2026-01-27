@@ -8,7 +8,7 @@ import {
   FiMessageSquare,
 } from "react-icons/fi";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { getVersion } from "@tauri-apps/api/app";
+import { getName, getVersion } from "@tauri-apps/api/app";
 import { platform } from "@tauri-apps/plugin-os";
 import type { ApplicationMonth, YearGroup } from "../../types/receipt";
 import { groupByYear } from "../../types/receipt";
@@ -31,6 +31,12 @@ export function Sidebar({
 }: SidebarProps) {
   // モーダル表示状態
   const [isCreateMonthModalOpen, setIsCreateMonthModalOpen] = useState(false);
+
+  // アプリ名（productName）
+  const [appName, setAppName] = useState("トリフネ");
+  useEffect(() => {
+    getName().then(setAppName);
+  }, []);
 
   // 展開されている年を管理
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
@@ -133,9 +139,16 @@ export function Sidebar({
   return (
     <aside className="w-56 bg-gray-900 text-gray-100 flex flex-col h-full">
       {/* ロゴ・タイトル */}
-      <div className="px-4 py-4 border-b border-gray-700">
-        <h1 className="text-lg font-bold text-white">Torifune</h1>
-        <p className="text-xs text-gray-400 mt-0.5">Receipt Analyzer</p>
+      <div className="px-4 py-4 border-b border-gray-700 flex items-center gap-3">
+        <img
+          src="/conv-01.png"
+          alt={appName}
+          className="w-8 h-8 object-contain"
+        />
+        <div>
+          <h1 className="text-lg font-bold text-white">{appName}</h1>
+          <p className="text-xs text-gray-400">Receipt Analyzer</p>
+        </div>
       </div>
 
       {/* 新規申請ボタン */}
