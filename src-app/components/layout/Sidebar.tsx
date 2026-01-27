@@ -5,7 +5,11 @@ import {
   FiCalendar,
   FiChevronRight,
   FiChevronDown,
+  FiMessageSquare,
 } from "react-icons/fi";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { getVersion } from "@tauri-apps/api/app";
+import { platform } from "@tauri-apps/plugin-os";
 import type { ApplicationMonth, YearGroup } from "../../types/receipt";
 import { groupByYear } from "../../types/receipt";
 import { CreateMonthModal } from "../month/CreateMonthModal";
@@ -85,6 +89,45 @@ export function Sidebar({
       }
       return next;
     });
+  };
+
+  // 要望・バグ報告フォームを開く
+  const openFeedbackForm = async () => {
+    try {
+      const [appVersion, osPlatform] = await Promise.all([
+        getVersion(),
+        platform(),
+      ]);
+
+      // platform() の戻り値を適切な表示名に変換
+      const osDisplayName = (() => {
+        switch (osPlatform) {
+          case "macos":
+            return "macOS";
+          case "windows":
+            return "Windows";
+          case "linux":
+            return "Linux";
+          default:
+            return osPlatform;
+        }
+      })();
+
+      const baseUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLScA8cCe_jqYsOB8pR-WwrdHh1dqcCrFRnvm4_wk579mm79oOQ/viewform";
+      const params = new URLSearchParams({
+        "entry.809162803": osDisplayName,
+        "entry.1476837389": appVersion,
+      });
+
+      await openUrl(`${baseUrl}?${params.toString()}`);
+    } catch (error) {
+      console.error("Failed to open feedback form:", error);
+      // フォールバック: パラメータなしでURLを開く
+      await openUrl(
+        "https://docs.google.com/forms/d/e/1FAIpQLScA8cCe_jqYsOB8pR-WwrdHh1dqcCrFRnvm4_wk579mm79oOQ/viewform"
+      );
+    }
   };
 
   return (
@@ -182,8 +225,15 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* 設定ボタン（下部） */}
-      <div className="px-3 py-3 border-t border-gray-700">
+      {/* 要望・バグ報告ボタンと設定ボタン（下部） */}
+      <div className="px-3 py-3 border-t border-gray-700 space-y-1">
+        <button
+          onClick={openFeedbackForm}
+          className="w-full flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-colors"
+        >
+          <FiMessageSquare className="w-4 h-4" />
+          要望・バグ報告
+        </button>
         <button
           onClick={onOpenSettings}
           className="w-full flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-colors"
