@@ -7,6 +7,7 @@ interface ReceiptListProps {
   sortConfig: SortConfig;
   onRemove: (id: string) => void;
   onUpdateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
+  onBulkUpdateReceiverName?: (name: string) => void;
   onToggleSort: (field: SortField) => void;
 }
 
@@ -16,6 +17,7 @@ export function ReceiptList({
   sortConfig,
   onRemove,
   onUpdateReceipt,
+  onBulkUpdateReceiverName,
   onToggleSort,
 }: ReceiptListProps) {
   if (receipts.length === 0) {
@@ -33,6 +35,7 @@ export function ReceiptList({
       sortConfig={sortConfig}
       onRemove={onRemove}
       onUpdateReceipt={onUpdateReceipt}
+      onBulkUpdateReceiverName={onBulkUpdateReceiverName}
       onToggleSort={onToggleSort}
     />
   );

@@ -179,3 +179,17 @@ export async function saveValidationRules(
 ): Promise<void> {
   return invoke<void>("save_validation_rules", { rules: settings });
 }
+
+import type { ReceiverNameHistory } from "../../types/receiverNameHistory";
+
+/** 宛名履歴を取得 */
+export async function getReceiverNameHistory(): Promise<ReceiverNameHistory | null> {
+  return invoke<ReceiverNameHistory | null>("get_receiver_name_history");
+}
+
+/** 宛名履歴を保存 */
+export async function saveReceiverNameHistory(
+  history: ReceiverNameHistory
+): Promise<void> {
+  return invoke<void>("save_receiver_name_history", { history });
+}

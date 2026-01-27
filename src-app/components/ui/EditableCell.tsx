@@ -10,6 +10,7 @@ interface EditableCellProps {
   options?: readonly string[];
   placeholder?: string;
   onChange: (value: string) => void;
+  onValueConfirmed?: (value: string) => void;
   className?: string;
   allowCustomInput?: boolean;
 }
@@ -20,6 +21,7 @@ export function EditableCell({
   options,
   placeholder = "",
   onChange,
+  onValueConfirmed,
   className = "",
   allowCustomInput = false,
 }: EditableCellProps) {
@@ -95,13 +97,14 @@ export function EditableCell({
             setIsModalOpen(true);
           } else if (selected !== value) {
             onChange(selected);
+            onValueConfirmed?.(selected);
           }
         }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isDropdownOpen, highlightedIndex, allOptions, value, onChange]);
+  }, [isDropdownOpen, highlightedIndex, allOptions, value, onChange, onValueConfirmed]);
 
   // Reset highlightedIndex when dropdown opens
   useEffect(() => {
@@ -115,8 +118,9 @@ export function EditableCell({
     setIsEditing(false);
     if (editValue !== value) {
       onChange(editValue);
+      onValueConfirmed?.(editValue);
     }
-  }, [editValue, value, onChange]);
+  }, [editValue, value, onChange, onValueConfirmed]);
 
   const handleCancel = useCallback(() => {
     setIsEditing(false);
@@ -207,6 +211,7 @@ export function EditableCell({
                       setIsModalOpen(true);
                     } else if (option !== value) {
                       onChange(option);
+                      onValueConfirmed?.(option);
                     }
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
@@ -226,7 +231,10 @@ export function EditableCell({
           defaultValue={value}
           onConfirm={(v) => {
             setIsModalOpen(false);
-            if (v !== value) onChange(v);
+            if (v !== value) {
+              onChange(v);
+              onValueConfirmed?.(v);
+            }
           }}
           onCancel={() => setIsModalOpen(false)}
         />

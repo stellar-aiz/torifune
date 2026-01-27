@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FiX, FiCheck, FiAlertCircle, FiCpu, FiFolder, FiTag, FiCheckSquare } from "react-icons/fi";
+import { FiX, FiCheck, FiAlertCircle, FiCpu, FiFolder, FiTag, FiCheckSquare, FiUser } from "react-icons/fi";
 import { useSettingsStore } from "../../hooks/useSettingsStore";
 import {
   testProviderConnection,
@@ -13,6 +13,7 @@ import type { OcrProvider, DirectoryValidation } from "../../types/receipt";
 import { FolderSettings } from "./FolderSettings";
 import { AccountCategoryRulesSettings } from "./AccountCategoryRulesSettings";
 import { ValidationRulesSettings } from "./ValidationRulesSettings";
+import { ReceiverNameHistorySettings } from "./ReceiverNameHistorySettings";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 interface SettingsModalProps {
@@ -20,13 +21,14 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = "ocr" | "storage" | "accountCategory" | "validationRules";
+type SettingsTab = "ocr" | "storage" | "accountCategory" | "validationRules" | "receiverNameHistory";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "storage", label: "保存先設定", icon: <FiFolder className="w-4 h-4" /> },
   { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
   { id: "accountCategory", label: "勘定科目ルール", icon: <FiTag className="w-4 h-4" /> },
   { id: "validationRules", label: "検証ルール", icon: <FiCheckSquare className="w-4 h-4" /> },
+  { id: "receiverNameHistory", label: "宛名履歴", icon: <FiUser className="w-4 h-4" /> },
 ];
 
 const providers: { id: OcrProvider; label: string }[] = [
@@ -462,6 +464,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
             {activeTab === "validationRules" && (
               <ValidationRulesSettings />
+            )}
+
+            {activeTab === "receiverNameHistory" && (
+              <ReceiverNameHistorySettings />
             )}
           </div>
         </div>

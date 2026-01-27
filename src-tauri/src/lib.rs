@@ -39,6 +39,8 @@ pub fn run() {
             commands::save_account_category_rules,
             commands::get_validation_rules,
             commands::save_validation_rules,
+            commands::get_receiver_name_history,
+            commands::save_receiver_name_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

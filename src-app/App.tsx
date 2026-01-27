@@ -112,6 +112,13 @@ function App() {
     }
   }, [store]);
 
+  // 宛名一括更新ハンドラ
+  const handleBulkUpdateReceiverName = useCallback((name: string) => {
+    currentReceipts.forEach((receipt) => {
+      store.updateReceipt(receipt.id, { receiverName: name });
+    });
+  }, [currentReceipts, store]);
+
   // 削除リクエストハンドラ（サイドバー・ActionBar共通）
   const handleRequestDeleteMonth = useCallback((monthId: string) => {
     setPendingDeleteMonthId(monthId);
@@ -208,6 +215,7 @@ function App() {
                   yearMonth={currentMonth?.yearMonth ?? ""}
                   onRemove={store.removeReceipt}
                   onUpdateReceipt={store.updateReceipt}
+                  onBulkUpdateReceiverName={handleBulkUpdateReceiverName}
                   sortConfig={store.sortConfig}
                   onToggleSort={store.toggleSort}
                 />

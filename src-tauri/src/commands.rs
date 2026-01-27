@@ -730,3 +730,31 @@ pub async fn save_validation_rules(app: AppHandle, rules: Value) -> Result<(), S
 
     Ok(())
 }
+
+/// 宛名履歴を取得
+#[tauri::command]
+pub async fn get_receiver_name_history(app: AppHandle) -> Result<Value, String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    let history = store.get("receiver_name_history").unwrap_or(Value::Null);
+
+    Ok(history)
+}
+
+/// 宛名履歴を保存
+#[tauri::command]
+pub async fn save_receiver_name_history(app: AppHandle, history: Value) -> Result<(), String> {
+    let store = app
+        .store("torifune.store.json")
+        .map_err(|e| format!("ストアの読み込みに失敗しました: {}", e))?;
+
+    store.set("receiver_name_history", history);
+
+    store
+        .save()
+        .map_err(|e| format!("履歴の保存に失敗しました: {}", e))?;
+
+    Ok(())
+}

@@ -16,6 +16,7 @@ import { ACCOUNT_CATEGORIES } from "../../constants/accountCategories";
 import { CURRENCIES } from "../../constants/currencies";
 import { generateThumbnail } from "../../services/pdf/pdfExtractor";
 import { saveThumbnail } from "../../services/tauri/commands";
+import { useReceiverNameHistoryStore } from "../../hooks/useReceiverNameHistoryStore";
 
 interface ReceiptTableRowProps {
   receipt: ReceiptData;
@@ -37,6 +38,7 @@ export function ReceiptTableRow({
   isReceiverNameCollapsed,
 }: ReceiptTableRowProps) {
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const receiverNameHistoryStore = useReceiverNameHistoryStore();
 
   useEffect(() => {
     if (receipt.thumbnailDataUrl || isGeneratingThumbnail || !receipt.filePath) {
@@ -216,9 +218,14 @@ export function ReceiptTableRow({
         ) : (
           <EditableCell
             value={receipt.receiverName ?? ""}
-            type="text"
+            type="select"
+            options={receiverNameHistoryStore.names}
+            allowCustomInput={true}
             placeholder="宛名"
             onChange={(v) => handleFieldChange("receiverName", v)}
+            onValueConfirmed={(v) => {
+              if (v) receiverNameHistoryStore.addName(v);
+            }}
             className="hover:bg-yellow-50"
           />
         )}

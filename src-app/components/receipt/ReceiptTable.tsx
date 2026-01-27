@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { FiChevronRight, FiChevronDown, FiFile, FiShoppingBag, FiUser } from "react-icons/fi";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { FiChevronRight, FiChevronDown, FiFile, FiShoppingBag, FiUser, FiEdit2 } from "react-icons/fi";
 import { ReceiptTableRow } from "./ReceiptTableRow";
+import { useReceiverNameHistoryStore } from "../../hooks/useReceiverNameHistoryStore";
 import type { ReceiptData, SortConfig, SortField } from "../../types/receipt";
 
 interface ReceiptTableProps {
@@ -8,6 +10,7 @@ interface ReceiptTableProps {
   yearMonth: string;
   onRemove: (id: string) => void;
   onUpdateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
+  onBulkUpdateReceiverName?: (name: string) => void;
   sortConfig: SortConfig;
   onToggleSort: (field: SortField) => void;
 }
@@ -17,12 +20,50 @@ export function ReceiptTable({
   yearMonth,
   onRemove,
   onUpdateReceipt,
+  onBulkUpdateReceiverName,
   sortConfig,
   onToggleSort,
 }: ReceiptTableProps) {
   const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] = useState(true);
   const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] = useState(false);
   const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(false);
+  const [isBulkReceiverNameOpen, setIsBulkReceiverNameOpen] = useState(false);
+  const [bulkHighlightedIndex, setBulkHighlightedIndex] = useState(-1);
+  const bulkDropdownRef = useRef<HTMLDivElement>(null);
+  const bulkTriggerRef = useRef<HTMLButtonElement>(null);
+  const receiverNameHistoryStore = useReceiverNameHistoryStore();
+
+  // 一括入力用の選択肢
+  const bulkReceiverNameOptions = ["", ...receiverNameHistoryStore.names, "その他（手入力）"];
+
+  // 一括入力ドロップダウンの外側クリックで閉じる
+  useEffect(() => {
+    if (!isBulkReceiverNameOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (
+        bulkTriggerRef.current && !bulkTriggerRef.current.contains(e.target as Node) &&
+        bulkDropdownRef.current && !bulkDropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsBulkReceiverNameOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [isBulkReceiverNameOpen]);
+
+  // 一括入力の選択肢をクリック
+  const handleBulkReceiverNameSelect = (option: string) => {
+    setIsBulkReceiverNameOpen(false);
+    if (option === "その他（手入力）") {
+      const customName = window.prompt("宛名を入力してください");
+      if (customName && customName.trim()) {
+        onBulkUpdateReceiverName?.(customName.trim());
+        receiverNameHistoryStore.addName(customName.trim());
+      }
+    } else if (option !== "") {
+      onBulkUpdateReceiverName?.(option);
+    }
+  };
 
   function SortIndicator({ field }: { field: SortField }): React.ReactElement {
     if (sortConfig.field !== field) {
@@ -87,20 +128,67 @@ export function ReceiptTable({
               </div>
             </th>
             <th
-              className={`${isReceiverNameColumnCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
-              onClick={() => setIsReceiverNameColumnCollapsed(!isReceiverNameColumnCollapsed)}
+              className={`${isReceiverNameColumnCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 transition-all duration-200`}
             >
               <div className="flex items-center gap-1">
-                {isReceiverNameColumnCollapsed ? (
-                  <>
-                    <FiChevronRight className="w-3 h-3" />
-                    <FiUser className="w-3 h-3" />
-                  </>
-                ) : (
-                  <>
-                    <FiChevronDown className="w-3 h-3" />
-                    <span>宛名</span>
-                  </>
+                <div
+                  className="flex items-center gap-1 cursor-pointer hover:bg-gray-200 rounded px-1 select-none"
+                  onClick={() => setIsReceiverNameColumnCollapsed(!isReceiverNameColumnCollapsed)}
+                >
+                  {isReceiverNameColumnCollapsed ? (
+                    <>
+                      <FiChevronRight className="w-3 h-3" />
+                      <FiUser className="w-3 h-3" />
+                    </>
+                  ) : (
+                    <>
+                      <FiChevronDown className="w-3 h-3" />
+                      <span>宛名</span>
+                    </>
+                  )}
+                </div>
+                {!isReceiverNameColumnCollapsed && onBulkUpdateReceiverName && (
+                  <div className="relative">
+                    <button
+                      ref={bulkTriggerRef}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsBulkReceiverNameOpen(!isBulkReceiverNameOpen);
+                      }}
+                      className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="宛名を一括入力"
+                    >
+                      <FiEdit2 className="w-3 h-3" />
+                    </button>
+                    {isBulkReceiverNameOpen && bulkTriggerRef.current && createPortal(
+                      <div
+                        ref={bulkDropdownRef}
+                        style={{
+                          position: "fixed",
+                          left: bulkTriggerRef.current.getBoundingClientRect().left,
+                          top: bulkTriggerRef.current.getBoundingClientRect().bottom + 4,
+                          zIndex: 9999,
+                        }}
+                        className="bg-white border border-gray-200 rounded-md shadow-lg max-h-[200px] overflow-y-auto py-1 min-w-[160px]"
+                      >
+                        {bulkReceiverNameOptions.map((option, index) => (
+                          <div
+                            key={index}
+                            onClick={() => handleBulkReceiverNameSelect(option)}
+                            onMouseEnter={() => setBulkHighlightedIndex(index)}
+                            className={`px-3 py-1.5 text-sm cursor-pointer ${
+                              bulkHighlightedIndex === index
+                                ? "bg-gray-100 text-gray-800"
+                                : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {option || "選択なし"}
+                          </div>
+                        ))}
+                      </div>,
+                      document.body
+                    )}
+                  </div>
                 )}
               </div>
             </th>
