@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronRight, FiChevronDown, FiFile, FiShoppingBag, FiUser, FiEdit2 } from "react-icons/fi";
 import { ReceiptTableRow } from "./ReceiptTableRow";
+import { InputModal } from "../ui/InputModal";
 import { useReceiverNameHistoryStore } from "../../hooks/useReceiverNameHistoryStore";
 import type { ReceiptData, SortConfig, SortField } from "../../types/receipt";
 
@@ -29,6 +30,7 @@ export function ReceiptTable({
   const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(false);
   const [isBulkReceiverNameOpen, setIsBulkReceiverNameOpen] = useState(false);
   const [bulkHighlightedIndex, setBulkHighlightedIndex] = useState(-1);
+  const [isManualInputModalOpen, setIsManualInputModalOpen] = useState(false);
   const bulkDropdownRef = useRef<HTMLDivElement>(null);
   const bulkTriggerRef = useRef<HTMLButtonElement>(null);
   const receiverNameHistoryStore = useReceiverNameHistoryStore();
@@ -55,13 +57,18 @@ export function ReceiptTable({
   const handleBulkReceiverNameSelect = (option: string) => {
     setIsBulkReceiverNameOpen(false);
     if (option === "その他（手入力）") {
-      const customName = window.prompt("宛名を入力してください");
-      if (customName && customName.trim()) {
-        onBulkUpdateReceiverName?.(customName.trim());
-        receiverNameHistoryStore.addToHistory(customName.trim());
-      }
+      setIsManualInputModalOpen(true);
     } else if (option !== "") {
       onBulkUpdateReceiverName?.(option);
+    }
+  };
+
+  // 手入力モーダルで確定
+  const handleManualInputConfirm = (value: string) => {
+    setIsManualInputModalOpen(false);
+    if (value.trim()) {
+      onBulkUpdateReceiverName?.(value.trim());
+      receiverNameHistoryStore.addToHistory(value.trim());
     }
   };
 
@@ -243,6 +250,15 @@ export function ReceiptTable({
           </tr>
         </tfoot>
       </table>
+
+      {/* 宛名手入力モーダル */}
+      <InputModal
+        isOpen={isManualInputModalOpen}
+        title="宛名を入力してください"
+        placeholder="例: 株式会社〇〇"
+        onConfirm={handleManualInputConfirm}
+        onCancel={() => setIsManualInputModalOpen(false)}
+      />
     </div>
   );
 }
