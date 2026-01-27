@@ -77,12 +77,12 @@ export function ReceiptTable({
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="h-full overflow-auto">
       <table className="w-full border-collapse min-w-[640px]">
-        <thead>
-          <tr className="bg-gray-100 border-b border-gray-200 sticky top-0">
+        <thead className="sticky top-0 z-20 bg-gray-100">
+          <tr className="bg-gray-100 border-b border-gray-200">
             <th
-              className={`${isFilenameColumnCollapsed ? "w-[40px]" : "min-w-[160px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
+              className={`${isFilenameColumnCollapsed ? "w-[40px]" : "min-w-[160px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
               onClick={() => setIsFilenameColumnCollapsed(!isFilenameColumnCollapsed)}
             >
               <div className="flex items-center gap-1">
@@ -99,18 +99,18 @@ export function ReceiptTable({
                 )}
               </div>
             </th>
-            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               {/* サムネイル */}
             </th>
             <th
-              className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("date")}
             >
               日付
               <SortIndicator field="date" />
             </th>
             <th
-              className={`${isMerchantColumnCollapsed ? "w-[40px]" : "min-w-[140px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
+              className={`${isMerchantColumnCollapsed ? "w-[40px]" : "min-w-[140px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
               onClick={() => setIsMerchantColumnCollapsed(!isMerchantColumnCollapsed)}
             >
               <div className="flex items-center gap-1">
@@ -128,7 +128,7 @@ export function ReceiptTable({
               </div>
             </th>
             <th
-              className={`${isReceiverNameColumnCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 transition-all duration-200`}
+              className={`${isReceiverNameColumnCollapsed ? "w-[40px]" : "min-w-[100px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 transition-all duration-200`}
             >
               <div className="flex items-center gap-1">
                 <div
@@ -193,25 +193,25 @@ export function ReceiptTable({
               </div>
             </th>
             <th
-              className="min-w-[80px] px-2 py-1.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10 cursor-pointer hover:bg-gray-200 select-none"
+              className="min-w-[80px] px-2 py-1.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none"
               onClick={() => onToggleSort("amount")}
             >
               金額
               <SortIndicator field="amount" />
             </th>
-            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="w-fit px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               {/* 単位 */}
             </th>
-            <th className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[100px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               勘定科目
             </th>
-            <th className="min-w-[120px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[120px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               備考
             </th>
-            <th className="min-w-[40px] px-2 py-1.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[40px] px-2 py-1.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               検証
             </th>
-            <th className="min-w-[40px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-100 z-10">
+            <th className="min-w-[40px] px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100">
               {/* 操作 */}
             </th>
           </tr>

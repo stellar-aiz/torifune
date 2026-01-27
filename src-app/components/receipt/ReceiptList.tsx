@@ -29,14 +29,16 @@ export function ReceiptList({
   }
 
   return (
-    <ReceiptTable
-      receipts={receipts}
-      yearMonth={yearMonth}
-      sortConfig={sortConfig}
-      onRemove={onRemove}
-      onUpdateReceipt={onUpdateReceipt}
-      onBulkUpdateReceiverName={onBulkUpdateReceiverName}
-      onToggleSort={onToggleSort}
-    />
+    <div className="h-full">
+      <ReceiptTable
+        receipts={receipts}
+        yearMonth={yearMonth}
+        sortConfig={sortConfig}
+        onRemove={onRemove}
+        onUpdateReceipt={onUpdateReceipt}
+        onBulkUpdateReceiverName={onBulkUpdateReceiverName}
+        onToggleSort={onToggleSort}
+      />
+    </div>
   );
 }
