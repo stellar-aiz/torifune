@@ -241,18 +241,20 @@ export function Sidebar({
       {/* 要望・バグ報告ボタンと設定ボタン（下部） */}
       <div className="px-3 py-3 border-t border-gray-700 space-y-1">
         <button
-          onClick={openFeedbackForm}
-          className="w-full flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-colors"
-        >
-          <FiMessageSquare className="w-4 h-4" />
-          要望・バグ報告
-        </button>
-        <button
           onClick={onOpenSettings}
           className="w-full flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-colors"
         >
           <FiSettings className="w-4 h-4" />
           設定
+        </button>
+      </div>
+      <div className="px-3 py-3 border-t border-gray-700 space-y-1">
+        <button
+          onClick={openFeedbackForm}
+          className="w-full flex items-center gap-2 px-3 py-2 text-gray-300 hover:bg-gray-800 hover:text-white rounded-lg text-sm transition-colors"
+        >
+          <FiMessageSquare className="w-4 h-4" />
+          要望・バグ報告
         </button>
       </div>
 

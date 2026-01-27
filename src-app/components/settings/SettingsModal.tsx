@@ -25,10 +25,10 @@ type SettingsTab = "ocr" | "storage" | "accountCategory" | "validationRules" | "
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "storage", label: "保存先設定", icon: <FiFolder className="w-4 h-4" /> },
-  { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
   { id: "accountCategory", label: "勘定科目ルール", icon: <FiTag className="w-4 h-4" /> },
   { id: "validationRules", label: "検証ルール", icon: <FiCheckSquare className="w-4 h-4" /> },
   { id: "receiverNameHistory", label: "宛名設定", icon: <FiUser className="w-4 h-4" /> },
+  { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
 ];
 
 const providers: { id: OcrProvider; label: string }[] = [
