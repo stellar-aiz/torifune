@@ -72,12 +72,27 @@ function updateCargoToml(version) {
 }
 
 /**
+ * Cargo.lock を更新（Cargo.toml の変更を反映）
+ */
+function updateCargoLock() {
+  const srcTauriDir = resolve(rootDir, "src-tauri");
+  try {
+    execSync("cargo update -p torifune", { cwd: srcTauriDir, stdio: "inherit" });
+    console.log("Updated Cargo.lock");
+  } catch (error) {
+    console.error(`Error updating Cargo.lock: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+/**
  * 更新したファイルを git add
  */
 function gitAddFiles() {
   const files = [
     resolve(rootDir, "src-tauri", "tauri.conf.json"),
     resolve(rootDir, "src-tauri", "Cargo.toml"),
+    resolve(rootDir, "src-tauri", "Cargo.lock"),
   ];
   try {
     execSync(`git add ${files.join(" ")}`, { cwd: rootDir, stdio: "inherit" });
@@ -97,6 +112,7 @@ function main() {
 
   updateTauriConfig(version);
   updateCargoToml(version);
+  updateCargoLock();
   gitAddFiles();
 
   console.log("Version sync completed successfully!");
