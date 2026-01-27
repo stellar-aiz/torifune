@@ -219,12 +219,12 @@ export function ReceiptTableRow({
           <EditableCell
             value={receipt.receiverName ?? ""}
             type="select"
-            options={receiverNameHistoryStore.names}
+            options={receiverNameHistoryStore.allNames}
             allowCustomInput={true}
             placeholder="宛名"
             onChange={(v) => handleFieldChange("receiverName", v)}
             onValueConfirmed={(v) => {
-              if (v) receiverNameHistoryStore.addName(v);
+              if (v) receiverNameHistoryStore.addToHistory(v);
             }}
             className="hover:bg-yellow-50"
           />

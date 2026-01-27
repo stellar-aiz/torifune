@@ -34,7 +34,7 @@ export function ReceiptTable({
   const receiverNameHistoryStore = useReceiverNameHistoryStore();
 
   // 一括入力用の選択肢
-  const bulkReceiverNameOptions = ["", ...receiverNameHistoryStore.names, "その他（手入力）"];
+  const bulkReceiverNameOptions = ["", ...receiverNameHistoryStore.allNames, "その他（手入力）"];
 
   // 一括入力ドロップダウンの外側クリックで閉じる
   useEffect(() => {
@@ -58,7 +58,7 @@ export function ReceiptTable({
       const customName = window.prompt("宛名を入力してください");
       if (customName && customName.trim()) {
         onBulkUpdateReceiverName?.(customName.trim());
-        receiverNameHistoryStore.addName(customName.trim());
+        receiverNameHistoryStore.addToHistory(customName.trim());
       }
     } else if (option !== "") {
       onBulkUpdateReceiverName?.(option);

@@ -180,16 +180,20 @@ export async function saveValidationRules(
   return invoke<void>("save_validation_rules", { rules: settings });
 }
 
-import type { ReceiverNameHistory } from "../../types/receiverNameHistory";
+import type { ReceiverNameSettings } from "../../types/receiverNameHistory";
 
-/** 宛名履歴を取得 */
-export async function getReceiverNameHistory(): Promise<ReceiverNameHistory | null> {
-  return invoke<ReceiverNameHistory | null>("get_receiver_name_history");
+// 旧形式（v1）と新形式（v2）の両方を扱うための型
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ReceiverNameData = ReceiverNameSettings | { names?: string[]; version?: number } | any;
+
+/** 宛名設定を取得 */
+export async function getReceiverNameHistory(): Promise<ReceiverNameData | null> {
+  return invoke<ReceiverNameData | null>("get_receiver_name_history");
 }
 
-/** 宛名履歴を保存 */
+/** 宛名設定を保存 */
 export async function saveReceiverNameHistory(
-  history: ReceiverNameHistory
+  history: ReceiverNameSettings
 ): Promise<void> {
   return invoke<void>("save_receiver_name_history", { history });
 }
