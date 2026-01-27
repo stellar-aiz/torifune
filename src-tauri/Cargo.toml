@@ -1,6 +1,6 @@
 [package]
 name = "torifune"
-version = "0.1.0"
+version = "0.2.0"
 description = "Torifune - Receipt image/PDF analyzer with OCR"
 authors = ["you"]
 edition = "2021"
