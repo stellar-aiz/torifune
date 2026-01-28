@@ -30,7 +30,7 @@ const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   { id: "validationRules", label: "検証ルール", icon: <FiCheckSquare className="w-4 h-4" /> },
   { id: "receiverNameHistory", label: "宛名設定", icon: <FiUser className="w-4 h-4" /> },
   { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
-  { id: "about", label: "ソフトウェアについて", icon: <FiInfo className="w-4 h-4" /> },
+  { id: "about", label: "アプリ情報", icon: <FiInfo className="w-4 h-4" /> },
 ];
 
 const providers: { id: OcrProvider; label: string }[] = [
