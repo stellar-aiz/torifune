@@ -99,3 +99,13 @@ jobs:
           files: |
             artifacts/macos-arm64/*.dmg
             artifacts/windows-nsis/*.exe
+
+      - name: Notify Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_USER_OAUTH_TOKEN }}
+          SLACK_CHANNEL: ${{ secrets.SLACK_RELEASE_NOTIFICATION_CHANNEL }}
+        run: |
+          curl -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"$SLACK_CHANNEL\",\"text\":\"🚀 トリフネ ${{ github.ref_name }} リリース\nhttps://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}\"}"
