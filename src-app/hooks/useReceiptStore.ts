@@ -134,10 +134,18 @@ export function useReceiptStore(): UseReceiptStoreReturn {
 
   /** ソート済みレシート一覧 */
   const sortedReceipts = useMemo(() => {
-    if (!sortConfig.field) return currentReceipts;
-
     return [...currentReceipts].sort((a, b) => {
-      const field = sortConfig.field!;
+      // 第一キー: 未処理（pending, processing, error）を先、処理済み（success）を後
+      const aIsUnprocessed = a.status !== "success";
+      const bIsUnprocessed = b.status !== "success";
+      if (aIsUnprocessed !== bIsUnprocessed) {
+        return aIsUnprocessed ? -1 : 1;
+      }
+
+      // 第二キー: sortConfig による既存ソート
+      if (!sortConfig.field) return 0;
+
+      const field = sortConfig.field;
       const aVal = a[field];
       const bVal = b[field];
 
