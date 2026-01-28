@@ -100,7 +100,7 @@ pub struct OcrProgressEvent {
 
 /// OCRプロバイダー trait
 ///
-/// 各OCRプロバイダーはこのtraitを実装することで、Torifuneに統合される。
+/// 各OCRプロバイダーはこのtraitを実装することで、torifuneに統合される。
 #[async_trait]
 pub trait OcrProvider: Send + Sync {
     /// プロバイダー名
