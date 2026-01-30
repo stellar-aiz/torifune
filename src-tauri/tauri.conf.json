@@ -41,7 +41,8 @@
     "copyright": "Copyright (c) 2025 Stellar",
     "publisher": "Stellar",
     "macOS": {
-      "minimumSystemVersion": "10.15"
+      "minimumSystemVersion": "10.15",
+      "hardenedRuntime": true
     },
     "windows": {
       "webviewInstallMode": {
