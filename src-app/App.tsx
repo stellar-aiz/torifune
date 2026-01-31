@@ -12,14 +12,21 @@ import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { FaFolderOpen } from "react-icons/fa";
 import { Toast } from "./components/common/Toast";
+import { AuthProvider } from "./contexts/AuthContext";
 
+/** Main application content */
 function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentMonthPath, setCurrentMonthPath] = useState<string | null>(null);
-  const [pendingDeleteMonthId, setPendingDeleteMonthId] = useState<string | null>(null);
+  const [pendingDeleteMonthId, setPendingDeleteMonthId] = useState<
+    string | null
+  >(null);
   const store = useReceiptStore();
-  const [toast, setToast] = useState<{ message: string; type: "success" | "warning" | "info" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "warning" | "info";
+  } | null>(null);
 
   const handleOpenSettings = useCallback(() => {
     setIsSettingsOpen(true);
@@ -33,7 +40,7 @@ function App() {
     (yearMonth: string) => {
       store.createMonth(yearMonth);
     },
-    [store]
+    [store],
   );
 
   // 現在の申請月
@@ -76,14 +83,16 @@ function App() {
     if (!store.isProcessing) return undefined;
     const total = currentReceipts.length;
     const completed = currentReceipts.filter(
-      r => r.status === "success" || r.status === "error"
+      (r) => r.status === "success" || r.status === "error",
     ).length;
     return { completed, total };
   }, [store.isProcessing, currentReceipts]);
 
   // OCR実行可否
   const canStartOcr = useMemo(() => {
-    const pendingCount = currentReceipts.filter(r => r.status === "pending").length;
+    const pendingCount = currentReceipts.filter(
+      (r) => r.status === "pending",
+    ).length;
     return pendingCount > 0 && !store.isProcessing;
   }, [currentReceipts, store.isProcessing]);
 
@@ -104,20 +113,32 @@ function App() {
     const totalIssues = warningCount + errorCount;
 
     if (totalIssues === 0) {
-      setToast({ message: "検証完了: 問題は見つかりませんでした", type: "success" });
+      setToast({
+        message: "検証完了: 問題は見つかりませんでした",
+        type: "success",
+      });
     } else if (errorCount > 0) {
-      setToast({ message: `検証完了: ${errorCount}件のエラー、${warningCount}件の警告`, type: "warning" });
+      setToast({
+        message: `検証完了: ${errorCount}件のエラー、${warningCount}件の警告`,
+        type: "warning",
+      });
     } else {
-      setToast({ message: `検証完了: ${warningCount}件の警告`, type: "warning" });
+      setToast({
+        message: `検証完了: ${warningCount}件の警告`,
+        type: "warning",
+      });
     }
   }, [store]);
 
   // 宛名一括更新ハンドラ
-  const handleBulkUpdateReceiverName = useCallback((name: string) => {
-    currentReceipts.forEach((receipt) => {
-      store.updateReceipt(receipt.id, { receiverName: name });
-    });
-  }, [currentReceipts, store]);
+  const handleBulkUpdateReceiverName = useCallback(
+    (name: string) => {
+      currentReceipts.forEach((receipt) => {
+        store.updateReceipt(receipt.id, { receiverName: name });
+      });
+    },
+    [currentReceipts, store],
+  );
 
   // 削除リクエストハンドラ（サイドバー・ActionBar共通）
   const handleRequestDeleteMonth = useCallback((monthId: string) => {
@@ -127,32 +148,37 @@ function App() {
 
   // 削除対象の月名を計算
   const pendingMonthName = useMemo(() => {
-    const month = store.months.find(m => m.id === pendingDeleteMonthId);
+    const month = store.months.find((m) => m.id === pendingDeleteMonthId);
     return month ? formatMonthName(month.yearMonth) : "";
   }, [store.months, pendingDeleteMonthId]);
 
   // 削除確認時のハンドラ
-  const handleConfirmDelete = useCallback(async (deletePhysically: boolean) => {
-    if (!pendingDeleteMonthId) return;
+  const handleConfirmDelete = useCallback(
+    async (deletePhysically: boolean) => {
+      if (!pendingDeleteMonthId) return;
 
-    if (deletePhysically) {
-      const monthToDelete = store.months.find(m => m.id === pendingDeleteMonthId);
-      if (monthToDelete) {
-        const rootDir = await getRootDirectory();
-        const year = monthToDelete.yearMonth.slice(0, 4);
-        const month = monthToDelete.yearMonth.slice(4, 6);
-        const pathToDelete = `${rootDir}/${year}/${month}`;
-        try {
-          await moveToTrash(pathToDelete);
-        } catch (error) {
-          console.error("Failed to move to trash:", error);
-          // ゴミ箱移動に失敗してもアプリ上のデータは削除する
+      if (deletePhysically) {
+        const monthToDelete = store.months.find(
+          (m) => m.id === pendingDeleteMonthId,
+        );
+        if (monthToDelete) {
+          const rootDir = await getRootDirectory();
+          const year = monthToDelete.yearMonth.slice(0, 4);
+          const month = monthToDelete.yearMonth.slice(4, 6);
+          const pathToDelete = `${rootDir}/${year}/${month}`;
+          try {
+            await moveToTrash(pathToDelete);
+          } catch (error) {
+            console.error("Failed to move to trash:", error);
+            // ゴミ箱移動に失敗してもアプリ上のデータは削除する
+          }
         }
       }
-    }
-    store.deleteMonth(pendingDeleteMonthId);
-    setPendingDeleteMonthId(null);
-  }, [pendingDeleteMonthId, store]);
+      store.deleteMonth(pendingDeleteMonthId);
+      setPendingDeleteMonthId(null);
+    },
+    [pendingDeleteMonthId, store],
+  );
 
   return (
     <div className="h-screen flex bg-gray-50">
@@ -177,7 +203,9 @@ function App() {
                 </h2>
                 {currentMonthPath && (
                   <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                    <span className="font-mono text-xs">{currentMonthPath}</span>
+                    <span className="font-mono text-xs">
+                      {currentMonthPath}
+                    </span>
                     <button
                       onClick={handleOpenFolder}
                       className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -197,7 +225,9 @@ function App() {
               processingProgress={processingProgress}
               onStartOcr={store.startOcr}
               onOpenExcel={handleOpenExcel}
-              onDeleteMonth={() => handleRequestDeleteMonth(store.currentMonthId!)}
+              onDeleteMonth={() =>
+                handleRequestDeleteMonth(store.currentMonthId!)
+              }
               canDeleteMonth={!!store.currentMonthId}
               onValidate={handleValidate}
               canValidate={canValidate}
@@ -298,4 +328,13 @@ function App() {
   );
 }
 
-export default App;
+/** App wrapped with AuthProvider for settings modal login functionality */
+function AppWithAuth() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
+export default AppWithAuth;
