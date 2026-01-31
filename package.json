@@ -16,7 +16,7 @@
     "tauri:build:debug": "tauri build --debug",
     "test": "vitest",
     "test:run": "vitest run",
-    "lint": "pnpm lint:ts && pnpm lint:rust",
+    "lint": "pnpm lint:ts && pnpm lint:rust && pnpm backend:lint",
     "lint:ts": "tsc --noEmit",
     "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
     "fmt": "pnpm fmt:ts && pnpm fmt:rust",
@@ -24,7 +24,12 @@
     "fmt:rust": "cd src-tauri && cargo fmt",
     "fmt:check": "pnpm fmt:check:ts && pnpm fmt:check:rust",
     "fmt:check:ts": "prettier --check 'src-app/**/*.{ts,tsx}'",
-    "fmt:check:rust": "cd src-tauri && cargo fmt --check"
+    "fmt:check:rust": "cd src-tauri && cargo fmt --check",
+    "backend:dev": "cd backend && go run cmd/server/main.go",
+    "backend:build": "cd backend && go build -o bin/server cmd/server/main.go",
+    "backend:lint": "cd backend && go vet ./... && go build ./...",
+    "backend:fmt": "cd backend && go fmt ./...",
+    "backend:test": "cd backend && go test ./..."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
