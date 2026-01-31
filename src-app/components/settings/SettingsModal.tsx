@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
-import { FiX, FiCheck, FiAlertCircle, FiCpu, FiFolder, FiTag, FiCheckSquare, FiUser, FiInfo } from "react-icons/fi";
+import {
+  FiX,
+  FiCheck,
+  FiAlertCircle,
+  FiCpu,
+  FiFolder,
+  FiTag,
+  FiCheckSquare,
+  FiUser,
+  FiInfo,
+  FiLogIn,
+} from "react-icons/fi";
 import { useSettingsStore } from "../../hooks/useSettingsStore";
 import {
   testProviderConnection,
@@ -15,6 +26,7 @@ import { AccountCategoryRulesSettings } from "./AccountCategoryRulesSettings";
 import { ValidationRulesSettings } from "./ValidationRulesSettings";
 import { ReceiverNameHistorySettings } from "./ReceiverNameHistorySettings";
 import { AboutSettings } from "./AboutSettings";
+import { LoginSettings } from "./LoginSettings";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 interface SettingsModalProps {
@@ -22,14 +34,38 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = "ocr" | "storage" | "accountCategory" | "validationRules" | "receiverNameHistory" | "about";
+type SettingsTab =
+  | "ocr"
+  | "storage"
+  | "accountCategory"
+  | "validationRules"
+  | "receiverNameHistory"
+  | "login"
+  | "about";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-  { id: "storage", label: "保存先設定", icon: <FiFolder className="w-4 h-4" /> },
-  { id: "accountCategory", label: "勘定科目ルール", icon: <FiTag className="w-4 h-4" /> },
-  { id: "validationRules", label: "検証ルール", icon: <FiCheckSquare className="w-4 h-4" /> },
-  { id: "receiverNameHistory", label: "宛名設定", icon: <FiUser className="w-4 h-4" /> },
+  {
+    id: "storage",
+    label: "保存先設定",
+    icon: <FiFolder className="w-4 h-4" />,
+  },
+  {
+    id: "accountCategory",
+    label: "勘定科目ルール",
+    icon: <FiTag className="w-4 h-4" />,
+  },
+  {
+    id: "validationRules",
+    label: "検証ルール",
+    icon: <FiCheckSquare className="w-4 h-4" />,
+  },
+  {
+    id: "receiverNameHistory",
+    label: "宛名設定",
+    icon: <FiUser className="w-4 h-4" />,
+  },
   { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
+  { id: "login", label: "アカウント", icon: <FiLogIn className="w-4 h-4" /> },
   { id: "about", label: "アプリ情報", icon: <FiInfo className="w-4 h-4" /> },
 ];
 
@@ -182,9 +218,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                  ${activeTab === tab.id
-                    ? "bg-white text-blue-600 shadow-sm"
-                    : "text-gray-600 hover:bg-gray-100"
+                  ${
+                    activeTab === tab.id
+                      ? "bg-white text-blue-600 shadow-sm"
+                      : "text-gray-600 hover:bg-gray-100"
                   }
                 `}
               >
@@ -209,9 +246,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         key={provider.id}
                         className={`
                           flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-colors
-                          ${selectedProvider === provider.id
-                            ? "border-blue-500 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
+                          ${
+                            selectedProvider === provider.id
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
                           }
                         `}
                       >
@@ -434,9 +472,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                     disabled={isTesting}
                     className={`
                       px-4 py-2 rounded-lg text-sm font-medium transition-colors
-                      ${isTesting
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      ${
+                        isTesting
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }
                     `}
                   >
@@ -464,17 +503,15 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <AccountCategoryRulesSettings />
             )}
 
-            {activeTab === "validationRules" && (
-              <ValidationRulesSettings />
-            )}
+            {activeTab === "validationRules" && <ValidationRulesSettings />}
 
             {activeTab === "receiverNameHistory" && (
               <ReceiverNameHistorySettings />
             )}
 
-            {activeTab === "about" && (
-              <AboutSettings />
-            )}
+            {activeTab === "login" && <LoginSettings />}
+
+            {activeTab === "about" && <AboutSettings />}
           </div>
         </div>
 
