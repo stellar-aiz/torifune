@@ -1,0 +1,26 @@
+runtime: go121
+
+instance_class: F1
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 2
+  target_cpu_utilization: 0.65
+
+env_variables:
+  # These should be set via Secret Manager or Cloud Console
+  # GOOGLE_PROJECT_ID: "your-project-id"
+  # DOCUMENT_AI_PROCESSOR_ID: "your-processor-id"
+  # JWT_SECRET: "your-jwt-secret"
+  # FRONTEND_URL: "https://your-frontend-url.com"
+  GOOGLE_LOCATION: "us"
+  FREE_TIER_LIMIT: "300"
+
+handlers:
+  - url: /.*
+    script: auto
+    secure: always
+
+# Uncomment to enable VPC connector for private resources
+# vpc_access_connector:
+#   name: projects/PROJECT_ID/locations/REGION/connectors/CONNECTOR_NAME
