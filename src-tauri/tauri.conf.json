@@ -3,6 +3,13 @@
   "productName": "torifune",
   "version": "0.2.9",
   "identifier": "com.stellar-aiz.torifune",
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["torifune"]
+      }
+    }
+  },
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
