@@ -28,7 +28,10 @@ export interface ExcelColumnMeta {
 export const ExcelColumns: Record<ExcelColumnLabel, ExcelColumnMeta> = {
   [ExcelColumnLabel.FileName]: { header: "ファイル名", width: 24 },
   [ExcelColumnLabel.ImagePreview]: { header: "画像プレビュー", width: 32 },
-  [ExcelColumnLabel.OriginalFileLink]: { header: "元ファイルへのリンク", width: 40 },
+  [ExcelColumnLabel.OriginalFileLink]: {
+    header: "元ファイルへのリンク",
+    width: 40,
+  },
   [ExcelColumnLabel.Date]: { header: "日付", width: 18 },
   [ExcelColumnLabel.Merchant]: { header: "店舗", width: 28 },
   [ExcelColumnLabel.ReceiverName]: { header: "宛名", width: 20 },
@@ -69,7 +72,11 @@ export function getColumnIndex(label: ExcelColumnLabel): number {
 /**
  * ExcelJSのsheet.columns用にカラム定義を生成
  */
-export function generateSheetColumns(): { header: string; key: string; width: number }[] {
+export function generateSheetColumns(): {
+  header: string;
+  key: string;
+  width: number;
+}[] {
   return ExcelColumnOrder.map((label) => ({
     header: ExcelColumns[label].header,
     key: label,

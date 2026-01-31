@@ -14,7 +14,14 @@ import type {
   SortField,
 } from "../types/receipt";
 import { getCurrentYearMonth } from "../types/receipt";
-import { batchOcrReceipts, ensureMonthDirectory, copyFileToMonth, saveThumbnail, getAccountCategoryRules, getValidationRules } from "../services/tauri/commands";
+import {
+  batchOcrReceipts,
+  ensureMonthDirectory,
+  copyFileToMonth,
+  saveThumbnail,
+  getAccountCategoryRules,
+  getValidationRules,
+} from "../services/tauri/commands";
 import {
   readFileAsBase64,
   getMimeType,
@@ -33,7 +40,7 @@ import type { AccountCategoryRule } from "../types/accountCategoryRule";
 
 function debounce<Args extends unknown[]>(
   fn: (...args: Args) => void,
-  ms: number
+  ms: number,
 ): (...args: Args) => void {
   let timeoutId: ReturnType<typeof setTimeout>;
   return (...args: Args) => {
@@ -93,7 +100,7 @@ export type UseReceiptStoreReturn = ReceiptStoreState & ReceiptStoreActions;
 /** 現在の申請月を取得するヘルパー */
 function getCurrentMonth(
   months: ApplicationMonth[],
-  currentMonthId: string | null
+  currentMonthId: string | null,
 ): ApplicationMonth | undefined {
   return months.find((m) => m.id === currentMonthId);
 }
@@ -103,7 +110,10 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   const [currentMonthId, setCurrentMonthId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: null, order: "asc" });
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: null,
+    order: "asc",
+  });
 
   // 起動時に既存のディレクトリから申請月を読み込む
   useEffect(() => {
@@ -172,34 +182,37 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   }, [months, currentMonthId]);
 
   /** 申請月を作成 */
-  const createMonth = useCallback(async (yearMonth?: string) => {
-    const newYearMonth = yearMonth ?? getCurrentYearMonth();
+  const createMonth = useCallback(
+    async (yearMonth?: string) => {
+      const newYearMonth = yearMonth ?? getCurrentYearMonth();
 
-    // 同じyearMonthの申請月が既にあればそれを選択
-    const existing = months.find((m) => m.yearMonth === newYearMonth);
-    if (existing) {
-      setCurrentMonthId(existing.id);
-      return;
-    }
+      // 同じyearMonthの申請月が既にあればそれを選択
+      const existing = months.find((m) => m.yearMonth === newYearMonth);
+      if (existing) {
+        setCurrentMonthId(existing.id);
+        return;
+      }
 
-    // Create the physical directory structure
-    try {
-      await ensureMonthDirectory(newYearMonth);
-    } catch (error) {
-      console.error("Failed to create month directory:", error);
-      // Continue with creating the logical month even if directory creation fails
-    }
+      // Create the physical directory structure
+      try {
+        await ensureMonthDirectory(newYearMonth);
+      } catch (error) {
+        console.error("Failed to create month directory:", error);
+        // Continue with creating the logical month even if directory creation fails
+      }
 
-    // Create new month
-    const newMonth: ApplicationMonth = {
-      id: nanoid(6),
-      yearMonth: newYearMonth,
-      receipts: [],
-    };
+      // Create new month
+      const newMonth: ApplicationMonth = {
+        id: nanoid(6),
+        yearMonth: newYearMonth,
+        receipts: [],
+      };
 
-    setMonths((prev) => [...prev, newMonth]);
-    setCurrentMonthId(newMonth.id);
-  }, [months]);
+      setMonths((prev) => [...prev, newMonth]);
+      setCurrentMonthId(newMonth.id);
+    },
+    [months],
+  );
 
   /** 申請月を選択（遅延読み込み対応） */
   const selectMonth = useCallback(
@@ -214,19 +227,19 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         try {
           const receipts = await loadApplicationMonthReceipts(
             month.yearMonth,
-            month.directoryPath
+            month.directoryPath,
           );
           setMonths((prev) =>
             prev.map((m) =>
-              m.id === monthId ? { ...m, receipts, isLoaded: true } : m
-            )
+              m.id === monthId ? { ...m, receipts, isLoaded: true } : m,
+            ),
           );
         } catch (error) {
           console.error("Failed to load receipts for month:", error);
         }
       }
     },
-    [months]
+    [months],
   );
 
   /** 申請月を削除 */
@@ -240,7 +253,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         setCurrentMonthId(remaining.length > 0 ? remaining[0].id : null);
       }
     },
-    [currentMonthId, months]
+    [currentMonthId, months],
   );
 
   /** レシートを追加 */
@@ -258,10 +271,16 @@ export function useReceiptStore(): UseReceiptStoreReturn {
           // サムネイル生成（コピー後のパスで）
           let thumbnailDataUrl: string | undefined;
           try {
-            thumbnailDataUrl = await generateThumbnail(copyResult.destinationPath);
+            thumbnailDataUrl = await generateThumbnail(
+              copyResult.destinationPath,
+            );
             // サムネイルをファイルに保存
             if (thumbnailDataUrl) {
-              await saveThumbnail(currentYearMonth, copyResult.fileName, thumbnailDataUrl);
+              await saveThumbnail(
+                currentYearMonth,
+                copyResult.fileName,
+                thumbnailDataUrl,
+              );
             }
           } catch (error) {
             console.warn("Failed to generate thumbnail:", error);
@@ -284,12 +303,12 @@ export function useReceiptStore(): UseReceiptStoreReturn {
           prev.map((m) =>
             m.id === currentMonthId
               ? { ...m, receipts: [...m.receipts, ...newReceipts] }
-              : m
-          )
+              : m,
+          ),
         );
       }
     },
-    [currentMonthId, currentYearMonth]
+    [currentMonthId, currentYearMonth],
   );
 
   /** レシートを削除 */
@@ -301,11 +320,11 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         prev.map((m) =>
           m.id === currentMonthId
             ? { ...m, receipts: m.receipts.filter((r) => r.id !== id) }
-            : m
-        )
+            : m,
+        ),
       );
     },
-    [currentMonthId]
+    [currentMonthId],
   );
 
   /** レシートを更新 */
@@ -319,10 +338,10 @@ export function useReceiptStore(): UseReceiptStoreReturn {
             ? {
                 ...m,
                 receipts: m.receipts.map((r) =>
-                  r.id === id ? { ...r, ...updates } : r
+                  r.id === id ? { ...r, ...updates } : r,
                 ),
               }
-            : m
+            : m,
         );
 
         // 自動保存をトリガー
@@ -334,7 +353,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
         return updated;
       });
     },
-    [currentMonthId]
+    [currentMonthId],
   );
 
   /** OCR処理を開始 */
@@ -342,7 +361,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     if (!currentMonthId || !currentYearMonth) return;
 
     const pendingReceipts = currentReceipts.filter(
-      (r) => r.status === "pending"
+      (r) => r.status === "pending",
     );
     if (pendingReceipts.length === 0) return;
 
@@ -368,11 +387,11 @@ export function useReceiptStore(): UseReceiptStoreReturn {
               receipts: m.receipts.map((r) =>
                 r.status === "pending"
                   ? { ...r, status: "processing" as const }
-                  : r
+                  : r,
               ),
             }
-          : m
-      )
+          : m,
+      ),
     );
 
     // 進捗イベントをリッスン
@@ -383,7 +402,9 @@ export function useReceiptStore(): UseReceiptStoreReturn {
 
         if (result) {
           // fileName でマッチング（並列処理対応）
-          const targetReceipt = pendingReceipts.find((r) => r.file === fileName);
+          const targetReceipt = pendingReceipts.find(
+            (r) => r.file === fileName,
+          );
           if (targetReceipt) {
             setMonths((prev) =>
               prev.map((m) =>
@@ -399,7 +420,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                           if (!accountCategory && result.data.merchant) {
                             accountCategory = matchAccountCategory(
                               result.data.merchant,
-                              accountCategoryRules
+                              accountCategoryRules,
                             );
                           }
                           return {
@@ -421,8 +442,8 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                         }
                       }),
                     }
-                  : m
-              )
+                  : m,
+              ),
             );
           }
         }
@@ -439,7 +460,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
             fileContent,
             mimeType,
           };
-        })
+        }),
       );
 
       // バッチOCR実行
@@ -454,11 +475,15 @@ export function useReceiptStore(): UseReceiptStoreReturn {
           if (m.id !== currentMonthId) return m;
 
           const successReceipts = m.receipts.filter(
-            (r) => r.status === "success"
+            (r) => r.status === "success",
           );
           if (successReceipts.length === 0) return m;
 
-          const validated = validateAllReceipts(successReceipts, currentYearMonth, validationRules);
+          const validated = validateAllReceipts(
+            successReceipts,
+            currentYearMonth,
+            validationRules,
+          );
 
           return {
             ...m,
@@ -495,11 +520,11 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                         status: "error" as const,
                         errorMessage: String(error),
                       }
-                    : r
+                    : r,
                 ),
               }
-            : m
-        )
+            : m,
+        ),
       );
     } finally {
       unlisten?.();
@@ -512,9 +537,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     if (!currentMonthId) return;
 
     setMonths((prev) =>
-      prev.map((m) =>
-        m.id === currentMonthId ? { ...m, receipts: [] } : m
-      )
+      prev.map((m) => (m.id === currentMonthId ? { ...m, receipts: [] } : m)),
     );
   }, [currentMonthId]);
 
@@ -532,7 +555,10 @@ export function useReceiptStore(): UseReceiptStoreReturn {
   }, []);
 
   /** 手動バリデーション実行 */
-  const validateReceipts = useCallback(async (): Promise<{ warningCount: number; errorCount: number }> => {
+  const validateReceipts = useCallback(async (): Promise<{
+    warningCount: number;
+    errorCount: number;
+  }> => {
     if (!currentMonthId || !currentYearMonth) {
       return { warningCount: 0, errorCount: 0 };
     }
@@ -543,7 +569,9 @@ export function useReceiptStore(): UseReceiptStoreReturn {
       return { warningCount: 0, errorCount: 0 };
     }
 
-    const successReceipts = currentMonth.receipts.filter((r) => r.status === "success");
+    const successReceipts = currentMonth.receipts.filter(
+      (r) => r.status === "success",
+    );
     if (successReceipts.length === 0) {
       return { warningCount: 0, errorCount: 0 };
     }
@@ -552,8 +580,15 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     const validationRules = await loadValidationRules();
 
     // 既存のissueをクリアしてから検証（setMonthsの外で実行）
-    const clearedReceipts = successReceipts.map((r) => ({ ...r, issues: undefined }));
-    const validated = validateAllReceipts(clearedReceipts, currentYearMonth, validationRules);
+    const clearedReceipts = successReceipts.map((r) => ({
+      ...r,
+      issues: undefined,
+    }));
+    const validated = validateAllReceipts(
+      clearedReceipts,
+      currentYearMonth,
+      validationRules,
+    );
 
     // カウントを計算（setMonthsの外で実行）
     let warningCount = 0;

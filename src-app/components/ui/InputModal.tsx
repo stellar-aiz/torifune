@@ -106,8 +106,12 @@ export function InputModal({
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onCompositionStart={() => { isComposingRef.current = true; }}
-          onCompositionEnd={() => { isComposingRef.current = false; }}
+          onCompositionStart={() => {
+            isComposingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            isComposingRef.current = false;
+          }}
           placeholder={placeholder}
           className="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
         />

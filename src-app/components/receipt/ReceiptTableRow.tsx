@@ -41,7 +41,11 @@ export function ReceiptTableRow({
   const receiverNameHistoryStore = useReceiverNameHistoryStore();
 
   useEffect(() => {
-    if (receipt.thumbnailDataUrl || isGeneratingThumbnail || !receipt.filePath) {
+    if (
+      receipt.thumbnailDataUrl ||
+      isGeneratingThumbnail ||
+      !receipt.filePath
+    ) {
       return;
     }
 
@@ -80,7 +84,10 @@ export function ReceiptTableRow({
         return <FiCheckCircle className="w-4 h-4 text-green-500" />;
       case "error":
         return (
-          <Tooltip content={receipt.errorMessage ?? "OCRエラー"} position="right">
+          <Tooltip
+            content={receipt.errorMessage ?? "OCRエラー"}
+            position="right"
+          >
             <FiAlertCircle className="w-4 h-4 text-red-500" />
           </Tooltip>
         );
@@ -101,17 +108,20 @@ export function ReceiptTableRow({
     }
   }
 
-  const handleRemoveClick = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const confirmed = await ask(`「${receipt.file}」を削除しますか？`, {
-      title: "削除の確認",
-      kind: "warning",
-    });
-    if (confirmed) {
-      onRemove();
-    }
-  }, [receipt.file, onRemove]);
+  const handleRemoveClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const confirmed = await ask(`「${receipt.file}」を削除しますか？`, {
+        title: "削除の確認",
+        kind: "warning",
+      });
+      if (confirmed) {
+        onRemove();
+      }
+    },
+    [receipt.file, onRemove],
+  );
 
   function renderValidationColumn(): React.ReactElement {
     if (!hasIssues) {
@@ -136,7 +146,11 @@ export function ReceiptTableRow({
   }
 
   // Row background based on validation severity
-  const rowBgClass = hasErrors ? "bg-red-50" : hasWarnings ? "bg-yellow-50" : "";
+  const rowBgClass = hasErrors
+    ? "bg-red-50"
+    : hasWarnings
+      ? "bg-yellow-50"
+      : "";
 
   return (
     <tr

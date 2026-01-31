@@ -36,7 +36,7 @@ export interface OcrRequest {
 export async function ocrReceipt(
   filePath: string,
   fileContent: string,
-  mimeType: string
+  mimeType: string,
 ): Promise<OcrResult> {
   return invoke<OcrResult>("ocr_receipt", {
     filePath,
@@ -47,7 +47,7 @@ export async function ocrReceipt(
 
 /** バッチOCR処理 */
 export async function batchOcrReceipts(
-  requests: OcrRequest[]
+  requests: OcrRequest[],
 ): Promise<OcrResult[]> {
   return invoke<OcrResult[]>("batch_ocr_receipts", { requests });
 }
@@ -74,7 +74,7 @@ export async function ensureMonthDirectory(yearMonth: string): Promise<string> {
 
 /** ディレクトリを検証 */
 export async function validateDirectory(
-  path: string
+  path: string,
 ): Promise<DirectoryValidation> {
   return invoke<DirectoryValidation>("validate_directory", { path });
 }
@@ -109,7 +109,7 @@ export interface FileInfo {
 
 /** ディレクトリ内のファイル一覧を取得 */
 export async function listFilesInDirectory(
-  directoryPath: string
+  directoryPath: string,
 ): Promise<FileInfo[]> {
   return invoke<FileInfo[]>("list_files_in_directory", { directoryPath });
 }
@@ -124,16 +124,19 @@ export interface CopyFileResult {
 /** ファイルを月別ディレクトリにコピー */
 export async function copyFileToMonth(
   sourcePath: string,
-  yearMonth: string
+  yearMonth: string,
 ): Promise<CopyFileResult> {
-  return invoke<CopyFileResult>("copy_file_to_month", { sourcePath, yearMonth });
+  return invoke<CopyFileResult>("copy_file_to_month", {
+    sourcePath,
+    yearMonth,
+  });
 }
 
 /** サムネイルを保存 */
 export async function saveThumbnail(
   yearMonth: string,
   fileName: string,
-  dataUrl: string
+  dataUrl: string,
 ): Promise<string> {
   return invoke<string>("save_thumbnail", { yearMonth, fileName, dataUrl });
 }
@@ -141,7 +144,7 @@ export async function saveThumbnail(
 /** サムネイルを読み込み */
 export async function readThumbnail(
   yearMonth: string,
-  fileName: string
+  fileName: string,
 ): Promise<string | null> {
   return invoke<string | null>("read_thumbnail", { yearMonth, fileName });
 }
@@ -158,12 +161,14 @@ import type { ValidationRulesSettings } from "../../types/validationRule";
 
 /** 勘定科目ルール設定を取得 */
 export async function getAccountCategoryRules(): Promise<AccountCategoryRulesSettings | null> {
-  return invoke<AccountCategoryRulesSettings | null>("get_account_category_rules");
+  return invoke<AccountCategoryRulesSettings | null>(
+    "get_account_category_rules",
+  );
 }
 
 /** 勘定科目ルール設定を保存 */
 export async function saveAccountCategoryRules(
-  settings: AccountCategoryRulesSettings
+  settings: AccountCategoryRulesSettings,
 ): Promise<void> {
   return invoke<void>("save_account_category_rules", { settings });
 }
@@ -175,7 +180,7 @@ export async function getValidationRules(): Promise<ValidationRulesSettings | nu
 
 /** バリデーションルール設定を保存 */
 export async function saveValidationRules(
-  settings: ValidationRulesSettings
+  settings: ValidationRulesSettings,
 ): Promise<void> {
   return invoke<void>("save_validation_rules", { rules: settings });
 }
@@ -184,7 +189,10 @@ import type { ReceiverNameSettings } from "../../types/receiverNameHistory";
 
 // 旧形式（v1）と新形式（v2）の両方を扱うための型
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ReceiverNameData = ReceiverNameSettings | { names?: string[]; version?: number } | any;
+type ReceiverNameData =
+  | ReceiverNameSettings
+  | { names?: string[]; version?: number }
+  | any;
 
 /** 宛名設定を取得 */
 export async function getReceiverNameHistory(): Promise<ReceiverNameData | null> {
@@ -193,7 +201,7 @@ export async function getReceiverNameHistory(): Promise<ReceiverNameData | null>
 
 /** 宛名設定を保存 */
 export async function saveReceiverNameHistory(
-  history: ReceiverNameSettings
+  history: ReceiverNameSettings,
 ): Promise<void> {
   return invoke<void>("save_receiver_name_history", { history });
 }

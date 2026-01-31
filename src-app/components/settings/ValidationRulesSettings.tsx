@@ -66,7 +66,7 @@ interface RuleItemProps {
   onChangeSeverity: (id: string, severity: "warning" | "error") => void;
   onUpdateParams: (
     id: string,
-    params: Record<string, number | string | boolean>
+    params: Record<string, number | string | boolean>,
   ) => void;
 }
 
@@ -252,21 +252,21 @@ export function ValidationRulesSettings() {
     (id: string, enabled: boolean) => {
       updateRule(id, { enabled });
     },
-    [updateRule]
+    [updateRule],
   );
 
   const handleChangeSeverity = useCallback(
     (id: string, severity: "warning" | "error") => {
       updateRule(id, { severity });
     },
-    [updateRule]
+    [updateRule],
   );
 
   const handleUpdateParams = useCallback(
     (id: string, params: Record<string, number | string | boolean>) => {
       updateRule(id, { params });
     },
-    [updateRule]
+    [updateRule],
   );
 
   const handleResetToDefault = useCallback(async () => {

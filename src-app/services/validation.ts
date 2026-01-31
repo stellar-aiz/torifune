@@ -19,7 +19,7 @@ interface ValidationContext {
 /** ルールを型で検索するヘルパー */
 function findRule(
   rules: ValidationRule[],
-  type: ValidationRule["type"]
+  type: ValidationRule["type"],
 ): ValidationRule | undefined {
   return rules.find((r) => r.type === type);
 }
@@ -27,7 +27,7 @@ function findRule(
 /** 日付フォーマットのバリデーション */
 function validateDateFormat(
   date: string | undefined,
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
   if (!date) return null;
@@ -48,7 +48,7 @@ function validateDateFormat(
 function validateDateRange(
   date: string | undefined,
   targetSegment: string,
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
   if (!date || !DATE_FORMAT_REGEX.test(date)) return null;
@@ -74,7 +74,9 @@ function validateDateRange(
   }
 
   // 月がmaxMonthDiff以上ずれている場合は警告
-  const monthDiff = Math.abs(year * 12 + month - (targetYear * 12 + targetMonth));
+  const monthDiff = Math.abs(
+    year * 12 + month - (targetYear * 12 + targetMonth),
+  );
   if (monthDiff >= maxMonthDiff) {
     return {
       field: "date",
@@ -90,7 +92,7 @@ function validateDateRange(
 /** 金額の小数点バリデーション */
 function validateAmountDecimal(
   amount: number | undefined,
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
   if (amount === undefined) return null;
@@ -111,7 +113,7 @@ function validateAmountDecimal(
 /** 外れ値閾値を計算 */
 function calculateOutlierThresholds(
   totals: number[],
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): {
   lowerBound: number;
   upperBound: number;
@@ -142,7 +144,7 @@ function calculateOutlierThresholds(
 function validateAmountOutlier(
   amount: number | undefined,
   thresholds: { lowerBound: number; upperBound: number },
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
   if (amount === undefined) return null;
@@ -172,12 +174,12 @@ function validateAmountOutlier(
 function detectFileDuplicates(
   receipt: ReceiptData,
   allResults: ReceiptData[],
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
 
   const duplicates = allResults.filter(
-    (r) => r.id !== receipt.id && r.file === receipt.file
+    (r) => r.id !== receipt.id && r.file === receipt.file,
   );
 
   if (duplicates.length > 0) {
@@ -195,7 +197,7 @@ function detectFileDuplicates(
 function detectDataDuplicates(
   receipt: ReceiptData,
   allResults: ReceiptData[],
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
   if (!receipt.date || !receipt.merchant || receipt.amount === undefined) {
@@ -227,7 +229,7 @@ function detectDataDuplicates(
 function validateEntertainmentNoteRequired(
   accountCategory: string | undefined,
   note: string | undefined,
-  rule: ValidationRule | undefined
+  rule: ValidationRule | undefined,
 ): ValidationIssue | null {
   if (!rule?.enabled) return null;
 
@@ -237,7 +239,8 @@ function validateEntertainmentNoteRequired(
         field: "note",
         type: "missing-field",
         severity: rule.severity,
-        message: "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
+        message:
+          "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
       };
     }
   }
@@ -248,7 +251,7 @@ function validateEntertainmentNoteRequired(
 export function validateReceipt(
   receipt: ReceiptData,
   context: ValidationContext,
-  rules?: ValidationRule[]
+  rules?: ValidationRule[],
 ): ValidationIssue[] {
   const effectiveRules = rules ?? context.rules;
   const issues: ValidationIssue[] = [];
@@ -263,7 +266,7 @@ export function validateReceipt(
     const dateRangeIssue = validateDateRange(
       receipt.date,
       context.targetSegment,
-      dateRangeRule
+      dateRangeRule,
     );
     if (dateRangeIssue) issues.push(dateRangeIssue);
   }
@@ -282,7 +285,7 @@ export function validateReceipt(
   const outlierIssue = validateAmountOutlier(
     receipt.amount,
     thresholds,
-    amountOutlierRule
+    amountOutlierRule,
   );
   if (outlierIssue) issues.push(outlierIssue);
 
@@ -291,7 +294,7 @@ export function validateReceipt(
   const fileDuplicateIssue = detectFileDuplicates(
     receipt,
     context.allResults,
-    duplicateFileRule
+    duplicateFileRule,
   );
   if (fileDuplicateIssue) issues.push(fileDuplicateIssue);
 
@@ -299,16 +302,19 @@ export function validateReceipt(
   const dataDuplicateIssue = detectDataDuplicates(
     receipt,
     context.allResults,
-    duplicateDataRule
+    duplicateDataRule,
   );
   if (dataDuplicateIssue) issues.push(dataDuplicateIssue);
 
   // 交際費備考必須チェック
-  const entertainmentNoteRule = findRule(effectiveRules, "entertainment-note-required");
+  const entertainmentNoteRule = findRule(
+    effectiveRules,
+    "entertainment-note-required",
+  );
   const entertainmentNoteIssue = validateEntertainmentNoteRequired(
     receipt.accountCategory,
     receipt.note,
-    entertainmentNoteRule
+    entertainmentNoteRule,
   );
   if (entertainmentNoteIssue) issues.push(entertainmentNoteIssue);
 
@@ -328,7 +334,7 @@ function getDefaultRules(): ValidationRule[] {
 export function validateAllReceipts(
   results: ReceiptData[],
   targetSegment: string,
-  rules?: ValidationRule[]
+  rules?: ValidationRule[],
 ): ReceiptData[] {
   const effectiveRules = rules ?? getDefaultRules();
   const context: ValidationContext = {

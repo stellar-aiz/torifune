@@ -25,7 +25,10 @@ export function createEmptySettings(): ReceiverNameSettings {
 /**
  * 旧形式からの移行（後方互換性）
  */
-export function migrateFromV1(oldData: { names?: string[]; version?: number }): ReceiverNameSettings {
+export function migrateFromV1(oldData: {
+  names?: string[];
+  version?: number;
+}): ReceiverNameSettings {
   return {
     registeredNames: [],
     historyNames: oldData.names ?? [],

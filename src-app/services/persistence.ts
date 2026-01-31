@@ -11,10 +11,7 @@ import {
   ensureMonthDirectory,
   readThumbnail,
 } from "./tauri/commands";
-import {
-  loadReceiptsFromExcel,
-  saveReceiptsToExcel,
-} from "./excel/exporter";
+import { loadReceiptsFromExcel, saveReceiptsToExcel } from "./excel/exporter";
 
 /**
  * ディレクトリをスキャンして既存の申請月を読み込む（遅延読み込み）
@@ -41,7 +38,7 @@ export async function loadApplicationMonths(): Promise<ApplicationMonth[]> {
  */
 export async function loadApplicationMonthReceipts(
   yearMonth: string,
-  directoryPath: string
+  directoryPath: string,
 ): Promise<ReceiptData[]> {
   // まずExcelから読み込みを試みる（directoryPathを渡して壊れたパスを復元）
   const excelReceipts = await loadReceiptsFromExcel(yearMonth, directoryPath);
@@ -52,7 +49,7 @@ export async function loadApplicationMonthReceipts(
       excelReceipts.map(async (receipt) => {
         const thumbnailDataUrl = await loadThumbnail(yearMonth, receipt.file);
         return { ...receipt, thumbnailDataUrl };
-      })
+      }),
     );
     return receiptsWithThumbnails;
   }
@@ -70,7 +67,7 @@ export async function loadApplicationMonthReceipts(
         status: "pending" as const,
         thumbnailDataUrl,
       };
-    })
+    }),
   );
 
   return receipts;
@@ -81,7 +78,7 @@ export async function loadApplicationMonthReceipts(
  */
 async function loadThumbnail(
   yearMonth: string,
-  fileName: string
+  fileName: string,
 ): Promise<string | undefined> {
   try {
     const thumbnail = await readThumbnail(yearMonth, fileName);
@@ -96,7 +93,7 @@ async function loadThumbnail(
  * 申請月のデータをExcelとして保存
  */
 export async function saveApplicationMonth(
-  month: ApplicationMonth
+  month: ApplicationMonth,
 ): Promise<void> {
   // ディレクトリを確保
   await ensureMonthDirectory(month.yearMonth);
@@ -109,7 +106,7 @@ export async function saveApplicationMonth(
  * 新規申請月を作成（ディレクトリも作成）
  */
 export async function createNewApplicationMonth(
-  yearMonth: string
+  yearMonth: string,
 ): Promise<ApplicationMonth> {
   const directoryPath = await ensureMonthDirectory(yearMonth);
 

@@ -5,7 +5,13 @@
 /** バリデーションイシュー */
 export interface ValidationIssue {
   field: "date" | "amount" | "merchant" | "file" | "duplicate" | "note";
-  type: "format" | "range" | "outlier" | "duplicate-file" | "duplicate-data" | "missing-field";
+  type:
+    | "format"
+    | "range"
+    | "outlier"
+    | "duplicate-file"
+    | "duplicate-data"
+    | "missing-field";
   severity: "warning" | "error";
   message: string;
 }
@@ -118,14 +124,16 @@ export interface DirectoryValidation {
 /** ApplicationMonth[] から YearGroup[] への変換 */
 export function groupByYear(
   months: ApplicationMonth[],
-  expandedYears: Set<string> = new Set()
+  expandedYears: Set<string> = new Set(),
 ): YearGroup[] {
   const yearMap = new Map<string, MonthItem[]>();
 
   for (const m of months) {
     const year = m.yearMonth.slice(0, 4);
     const month = m.yearMonth.slice(4, 6);
-    const successCount = m.receipts.filter((r) => r.status === "success").length;
+    const successCount = m.receipts.filter(
+      (r) => r.status === "success",
+    ).length;
 
     const item: MonthItem = {
       month,

@@ -23,16 +23,36 @@ export const DEFAULT_ACCOUNT_CATEGORY_RULES: Omit<
   AccountCategoryRule,
   "id" | "createdAt"
 >[] = [
-  { pattern: "GO株式会社", flags: "i", accountCategory: "旅費交通費", enabled: true },
-  { pattern: "タクシー", flags: "i", accountCategory: "旅費交通費", enabled: true },
-  { pattern: "グリーンキャブ", flags: "i", accountCategory: "旅費交通費", enabled: true },
-  { pattern: "自動車", flags: "i", accountCategory: "旅費交通費", enabled: true },
+  {
+    pattern: "GO株式会社",
+    flags: "i",
+    accountCategory: "旅費交通費",
+    enabled: true,
+  },
+  {
+    pattern: "タクシー",
+    flags: "i",
+    accountCategory: "旅費交通費",
+    enabled: true,
+  },
+  {
+    pattern: "グリーンキャブ",
+    flags: "i",
+    accountCategory: "旅費交通費",
+    enabled: true,
+  },
+  {
+    pattern: "自動車",
+    flags: "i",
+    accountCategory: "旅費交通費",
+    enabled: true,
+  },
   { pattern: "交通", flags: "i", accountCategory: "旅費交通費", enabled: true },
 ];
 
 /** 新規ルールを作成するためのヘルパー */
 export function createAccountCategoryRule(
-  data: Omit<AccountCategoryRule, "id" | "createdAt">
+  data: Omit<AccountCategoryRule, "id" | "createdAt">,
 ): AccountCategoryRule {
   return {
     ...data,
@@ -45,7 +65,7 @@ export function createAccountCategoryRule(
 export function createDefaultRulesSettings(): AccountCategoryRulesSettings {
   return {
     rules: DEFAULT_ACCOUNT_CATEGORY_RULES.map((rule) =>
-      createAccountCategoryRule(rule)
+      createAccountCategoryRule(rule),
     ),
     version: 1,
   };

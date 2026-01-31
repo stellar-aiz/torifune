@@ -10,7 +10,10 @@ interface ReceiptDropzoneProps {
   isProcessing: boolean;
 }
 
-export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneProps) {
+export function ReceiptDropzone({
+  onFilesAdded,
+  isProcessing,
+}: ReceiptDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const dropzoneRef = useRef<HTMLDivElement>(null);
   const isProcessingRef = useRef(isProcessing);
@@ -36,7 +39,7 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
           if (isProcessingRef.current) return;
 
           const supportedFiles = payload.paths.filter((path) =>
-            SUPPORTED_EXTENSIONS.test(path)
+            SUPPORTED_EXTENSIONS.test(path),
           );
           if (supportedFiles.length > 0) {
             onFilesAdded(supportedFiles);
@@ -100,9 +103,10 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
       onDrop={handleDrop}
       className={`
         relative border-2 border-dashed rounded-lg px-4 py-2 transition-all
-        ${isDragging
-          ? "border-blue-500 bg-blue-50"
-          : "border-gray-300 bg-white hover:border-gray-400"
+        ${
+          isDragging
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 bg-white hover:border-gray-400"
         }
         ${isProcessing ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
       `}
@@ -128,9 +132,7 @@ export function ReceiptDropzone({ onFilesAdded, isProcessing }: ReceiptDropzoneP
               ? "ここにドロップ"
               : "ファイルをここにドロップ、またはクリックして選択"}
           </p>
-          <p className="text-xs text-gray-400">
-            JPEG, PNG, PDF (複数選択可)
-          </p>
+          <p className="text-xs text-gray-400">JPEG, PNG, PDF (複数選択可)</p>
         </div>
       </div>
 

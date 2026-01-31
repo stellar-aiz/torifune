@@ -33,7 +33,10 @@ export interface ValidationRulesSettings {
 }
 
 /** デフォルトのバリデーションルール定義 */
-export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[] = [
+export const DEFAULT_VALIDATION_RULES: Omit<
+  ValidationRule,
+  "id" | "createdAt"
+>[] = [
   {
     type: "date-format",
     name: "日付フォーマット",
@@ -89,7 +92,8 @@ export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[
   {
     type: "duplicate-data",
     name: "データ重複",
-    description: "同じ日付・店舗・金額の組み合わせを持つレシートが存在する場合に警告します",
+    description:
+      "同じ日付・店舗・金額の組み合わせを持つレシートが存在する場合に警告します",
     enabled: true,
     severity: "warning",
     params: {},
@@ -98,7 +102,8 @@ export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[
   {
     type: "entertainment-note-required",
     name: "交際費備考必須",
-    description: "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
+    description:
+      "備考必須。会食の場合、人数（自分含む）と目的、同席者を記載ください",
     enabled: true,
     severity: "error",
     params: {},
@@ -108,7 +113,7 @@ export const DEFAULT_VALIDATION_RULES: Omit<ValidationRule, "id" | "createdAt">[
 
 /** 新規ルールを作成するためのヘルパー */
 export function createValidationRule(
-  data: Omit<ValidationRule, "id" | "createdAt">
+  data: Omit<ValidationRule, "id" | "createdAt">,
 ): ValidationRule {
   return {
     ...data,
@@ -132,7 +137,7 @@ export function mergeWithDefaultRules(existingRules: ValidationRule[]): {
 } {
   const existingTypes = new Set(existingRules.map((r) => r.type));
   const missingDefaults = DEFAULT_VALIDATION_RULES.filter(
-    (d) => !existingTypes.has(d.type)
+    (d) => !existingTypes.has(d.type),
   );
 
   if (missingDefaults.length === 0) {

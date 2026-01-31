@@ -14,12 +14,15 @@ import { getOcrSettings, saveOcrSettings } from "../services/tauri/commands";
 function getDefaultSettings(): OcrSettings {
   const provider = import.meta.env.VITE_OCR_PROVIDER;
   return {
-    provider: (provider === "veryfi" ? "veryfi" : "googledocumentai") as OcrProvider,
+    provider: (provider === "veryfi"
+      ? "veryfi"
+      : "googledocumentai") as OcrProvider,
     // Google Document AI
     projectId: import.meta.env.VITE_GOOGLE_PROJECT_ID || undefined,
     location: import.meta.env.VITE_GOOGLE_LOCATION || undefined,
     processorId: import.meta.env.VITE_GOOGLE_PROCESSOR_ID || undefined,
-    serviceAccountJson: import.meta.env.VITE_GOOGLE_SERVICE_ACCOUNT_JSON || undefined,
+    serviceAccountJson:
+      import.meta.env.VITE_GOOGLE_SERVICE_ACCOUNT_JSON || undefined,
     // Veryfi
     veryfiClientId: import.meta.env.VITE_VERYFI_CLIENT_ID || undefined,
     veryfiClientSecret: import.meta.env.VITE_VERYFI_CLIENT_SECRET || undefined,
@@ -87,7 +90,7 @@ export function useSettingsStore(): UseSettingsStoreReturn {
       setSettings(newSettings);
     } catch (e) {
       throw new Error(
-        e instanceof Error ? e.message : "設定の保存に失敗しました"
+        e instanceof Error ? e.message : "設定の保存に失敗しました",
       );
     }
   }, []);

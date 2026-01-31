@@ -25,17 +25,20 @@ export interface AccountCategoryRulesStoreState {
 
 export interface AccountCategoryRulesStoreActions {
   addRule: (
-    rule: Omit<AccountCategoryRule, "id" | "createdAt">
+    rule: Omit<AccountCategoryRule, "id" | "createdAt">,
   ) => Promise<void>;
-  updateRule: (id: string, updates: Partial<AccountCategoryRule>) => Promise<void>;
+  updateRule: (
+    id: string,
+    updates: Partial<AccountCategoryRule>,
+  ) => Promise<void>;
   deleteRule: (id: string) => Promise<void>;
   reorderRules: (rules: AccountCategoryRule[]) => Promise<void>;
   resetToDefault: () => Promise<void>;
   reload: () => Promise<void>;
 }
 
-export type UseAccountCategoryRulesStoreReturn = AccountCategoryRulesStoreState &
-  AccountCategoryRulesStoreActions;
+export type UseAccountCategoryRulesStoreReturn =
+  AccountCategoryRulesStoreState & AccountCategoryRulesStoreActions;
 
 export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreReturn {
   const [rules, setRules] = useState<AccountCategoryRule[]>([]);
@@ -68,7 +71,9 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
         setRules(defaultSettings.rules);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "ルールの読み込みに失敗しました");
+      setError(
+        e instanceof Error ? e.message : "ルールの読み込みに失敗しました",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -82,11 +87,11 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
         await saveRules([...rules, newRule]);
       } catch (e) {
         throw new Error(
-          e instanceof Error ? e.message : "ルールの追加に失敗しました"
+          e instanceof Error ? e.message : "ルールの追加に失敗しました",
         );
       }
     },
-    [rules, saveRules]
+    [rules, saveRules],
   );
 
   /** ルールを更新 */
@@ -94,16 +99,16 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
     async (id: string, updates: Partial<AccountCategoryRule>) => {
       try {
         const newRules = rules.map((rule) =>
-          rule.id === id ? { ...rule, ...updates } : rule
+          rule.id === id ? { ...rule, ...updates } : rule,
         );
         await saveRules(newRules);
       } catch (e) {
         throw new Error(
-          e instanceof Error ? e.message : "ルールの更新に失敗しました"
+          e instanceof Error ? e.message : "ルールの更新に失敗しました",
         );
       }
     },
-    [rules, saveRules]
+    [rules, saveRules],
   );
 
   /** ルールを削除 */
@@ -114,11 +119,11 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
         await saveRules(newRules);
       } catch (e) {
         throw new Error(
-          e instanceof Error ? e.message : "ルールの削除に失敗しました"
+          e instanceof Error ? e.message : "ルールの削除に失敗しました",
         );
       }
     },
-    [rules, saveRules]
+    [rules, saveRules],
   );
 
   /** ルールの順序を変更 */
@@ -128,11 +133,11 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
         await saveRules(newRules);
       } catch (e) {
         throw new Error(
-          e instanceof Error ? e.message : "ルールの並び替えに失敗しました"
+          e instanceof Error ? e.message : "ルールの並び替えに失敗しました",
         );
       }
     },
-    [saveRules]
+    [saveRules],
   );
 
   /** デフォルトにリセット */
@@ -143,7 +148,7 @@ export function useAccountCategoryRulesStore(): UseAccountCategoryRulesStoreRetu
       setRules(defaultSettings.rules);
     } catch (e) {
       throw new Error(
-        e instanceof Error ? e.message : "リセットに失敗しました"
+        e instanceof Error ? e.message : "リセットに失敗しました",
       );
     }
   }, []);

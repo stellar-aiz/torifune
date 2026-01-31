@@ -19,10 +19,10 @@ export function CreateMonthModal({
   const currentMonth = now.getMonth() + 1; // 1-based
 
   const [selectedYear, setSelectedYear] = useState<string>(
-    currentYear.toString()
+    currentYear.toString(),
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    currentMonth.toString()
+    currentMonth.toString(),
   );
 
   // Reset to current year/month when modal opens
@@ -90,7 +90,9 @@ export function CreateMonthModal({
               <FiCalendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">新規申請月</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                新規申請月
+              </h2>
               <p className="text-sm text-gray-500">経費申請する月を選択</p>
             </div>
           </div>

@@ -48,14 +48,16 @@ export function Sidebar({
     isInitialized.current = true;
 
     const currentYear = new Date().getFullYear().toString();
-    const hasCurrentYear = months.some((m) => m.yearMonth.startsWith(currentYear));
+    const hasCurrentYear = months.some((m) =>
+      m.yearMonth.startsWith(currentYear),
+    );
 
     if (hasCurrentYear) {
       setExpandedYears(new Set([currentYear]));
     } else {
       // 当年のデータがなければ最新の年を展開
       const sortedMonths = [...months].sort((a, b) =>
-        b.yearMonth.localeCompare(a.yearMonth)
+        b.yearMonth.localeCompare(a.yearMonth),
       );
       setExpandedYears(new Set([sortedMonths[0].yearMonth.slice(0, 4)]));
     }
@@ -76,13 +78,13 @@ export function Sidebar({
   // 年グループに変換
   const yearGroups: YearGroup[] = useMemo(
     () => groupByYear(months, expandedYears),
-    [months, expandedYears]
+    [months, expandedYears],
   );
 
   // 既存のyearMonthリストを計算
   const existingYearMonths = useMemo(
     () => months.map((m) => m.yearMonth),
-    [months]
+    [months],
   );
 
   const toggleYear = (year: string) => {
@@ -100,7 +102,7 @@ export function Sidebar({
   const openProductPage = async () => {
     const url = `https://stellar-aiz.com/`;
     await openUrl(url);
-  }
+  };
 
   // 要望・バグ報告フォームを開く
   const openFeedbackForm = async () => {
@@ -136,7 +138,7 @@ export function Sidebar({
       console.error("Failed to open feedback form:", error);
       // フォールバック: パラメータなしでURLを開く
       await openUrl(
-        "https://docs.google.com/forms/d/e/1FAIpQLScA8cCe_jqYsOB8pR-WwrdHh1dqcCrFRnvm4_wk579mm79oOQ/viewform"
+        "https://docs.google.com/forms/d/e/1FAIpQLScA8cCe_jqYsOB8pR-WwrdHh1dqcCrFRnvm4_wk579mm79oOQ/viewform",
       );
     }
   };
@@ -144,7 +146,8 @@ export function Sidebar({
   return (
     <aside className="w-56 bg-gray-900 text-gray-100 flex flex-col h-full">
       {/* ロゴ・タイトル */}
-      <div className="px-4 py-4 border-b border-gray-700 flex items-center gap-3 cursor-pointer"
+      <div
+        className="px-4 py-4 border-b border-gray-700 flex items-center gap-3 cursor-pointer"
         onClick={openProductPage}
       >
         <img
@@ -206,7 +209,10 @@ export function Sidebar({
                         const isActive = monthItem.monthId === currentMonthId;
 
                         return (
-                          <li key={monthItem.monthId} className="group relative">
+                          <li
+                            key={monthItem.monthId}
+                            className="group relative"
+                          >
                             <button
                               onClick={() => onSelectMonth(monthItem.monthId)}
                               className={`
@@ -229,7 +235,8 @@ export function Sidebar({
                                     ${isActive ? "bg-teal-500/30 text-teal-200" : "bg-gray-700"}
                                   `}
                                 >
-                                  {monthItem.successCount}/{monthItem.receiptCount}
+                                  {monthItem.successCount}/
+                                  {monthItem.receiptCount}
                                 </span>
                               )}
                             </button>

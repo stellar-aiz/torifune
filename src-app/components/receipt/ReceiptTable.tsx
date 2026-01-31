@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FiChevronRight, FiChevronDown, FiFile, FiShoppingBag, FiUser, FiEdit2 } from "react-icons/fi";
+import {
+  FiChevronRight,
+  FiChevronDown,
+  FiFile,
+  FiShoppingBag,
+  FiUser,
+  FiEdit2,
+} from "react-icons/fi";
 import { ReceiptTableRow } from "./ReceiptTableRow";
 import { InputModal } from "../ui/InputModal";
 import { useReceiverNameHistoryStore } from "../../hooks/useReceiverNameHistoryStore";
@@ -25,9 +32,12 @@ export function ReceiptTable({
   sortConfig,
   onToggleSort,
 }: ReceiptTableProps) {
-  const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] = useState(true);
-  const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] = useState(false);
-  const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] = useState(false);
+  const [isFilenameColumnCollapsed, setIsFilenameColumnCollapsed] =
+    useState(true);
+  const [isMerchantColumnCollapsed, setIsMerchantColumnCollapsed] =
+    useState(false);
+  const [isReceiverNameColumnCollapsed, setIsReceiverNameColumnCollapsed] =
+    useState(false);
   const [isBulkReceiverNameOpen, setIsBulkReceiverNameOpen] = useState(false);
   const [bulkHighlightedIndex, setBulkHighlightedIndex] = useState(-1);
   const [isManualInputModalOpen, setIsManualInputModalOpen] = useState(false);
@@ -36,15 +46,21 @@ export function ReceiptTable({
   const receiverNameHistoryStore = useReceiverNameHistoryStore();
 
   // 一括入力用の選択肢
-  const bulkReceiverNameOptions = ["", ...receiverNameHistoryStore.allNames, "その他（手入力）"];
+  const bulkReceiverNameOptions = [
+    "",
+    ...receiverNameHistoryStore.allNames,
+    "その他（手入力）",
+  ];
 
   // 一括入力ドロップダウンの外側クリックで閉じる
   useEffect(() => {
     if (!isBulkReceiverNameOpen) return;
     const handleMouseDown = (e: MouseEvent) => {
       if (
-        bulkTriggerRef.current && !bulkTriggerRef.current.contains(e.target as Node) &&
-        bulkDropdownRef.current && !bulkDropdownRef.current.contains(e.target as Node)
+        bulkTriggerRef.current &&
+        !bulkTriggerRef.current.contains(e.target as Node) &&
+        bulkDropdownRef.current &&
+        !bulkDropdownRef.current.contains(e.target as Node)
       ) {
         setIsBulkReceiverNameOpen(false);
       }
@@ -90,7 +106,9 @@ export function ReceiptTable({
           <tr className="bg-gray-100 border-b border-gray-200">
             <th
               className={`${isFilenameColumnCollapsed ? "w-[40px]" : "min-w-[160px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
-              onClick={() => setIsFilenameColumnCollapsed(!isFilenameColumnCollapsed)}
+              onClick={() =>
+                setIsFilenameColumnCollapsed(!isFilenameColumnCollapsed)
+              }
             >
               <div className="flex items-center gap-1">
                 {isFilenameColumnCollapsed ? (
@@ -118,7 +136,9 @@ export function ReceiptTable({
             </th>
             <th
               className={`${isMerchantColumnCollapsed ? "w-[40px]" : "min-w-[140px]"} px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-100 cursor-pointer hover:bg-gray-200 select-none transition-all duration-200`}
-              onClick={() => setIsMerchantColumnCollapsed(!isMerchantColumnCollapsed)}
+              onClick={() =>
+                setIsMerchantColumnCollapsed(!isMerchantColumnCollapsed)
+              }
             >
               <div className="flex items-center gap-1">
                 {isMerchantColumnCollapsed ? (
@@ -140,7 +160,11 @@ export function ReceiptTable({
               <div className="flex items-center gap-1">
                 <div
                   className="flex items-center gap-1 cursor-pointer hover:bg-gray-200 rounded px-1 select-none"
-                  onClick={() => setIsReceiverNameColumnCollapsed(!isReceiverNameColumnCollapsed)}
+                  onClick={() =>
+                    setIsReceiverNameColumnCollapsed(
+                      !isReceiverNameColumnCollapsed,
+                    )
+                  }
                 >
                   {isReceiverNameColumnCollapsed ? (
                     <>
@@ -167,34 +191,43 @@ export function ReceiptTable({
                     >
                       <FiEdit2 className="w-3 h-3" />
                     </button>
-                    {isBulkReceiverNameOpen && bulkTriggerRef.current && createPortal(
-                      <div
-                        ref={bulkDropdownRef}
-                        style={{
-                          position: "fixed",
-                          left: bulkTriggerRef.current.getBoundingClientRect().left,
-                          top: bulkTriggerRef.current.getBoundingClientRect().bottom + 4,
-                          zIndex: 9999,
-                        }}
-                        className="bg-white border border-gray-200 rounded-md shadow-lg max-h-[200px] overflow-y-auto py-1 min-w-[160px]"
-                      >
-                        {bulkReceiverNameOptions.map((option, index) => (
-                          <div
-                            key={index}
-                            onClick={() => handleBulkReceiverNameSelect(option)}
-                            onMouseEnter={() => setBulkHighlightedIndex(index)}
-                            className={`px-3 py-1.5 text-sm cursor-pointer ${
-                              bulkHighlightedIndex === index
-                                ? "bg-gray-100 text-gray-800"
-                                : "text-gray-700 hover:bg-gray-50"
-                            }`}
-                          >
-                            {option || "選択なし"}
-                          </div>
-                        ))}
-                      </div>,
-                      document.body
-                    )}
+                    {isBulkReceiverNameOpen &&
+                      bulkTriggerRef.current &&
+                      createPortal(
+                        <div
+                          ref={bulkDropdownRef}
+                          style={{
+                            position: "fixed",
+                            left: bulkTriggerRef.current.getBoundingClientRect()
+                              .left,
+                            top:
+                              bulkTriggerRef.current.getBoundingClientRect()
+                                .bottom + 4,
+                            zIndex: 9999,
+                          }}
+                          className="bg-white border border-gray-200 rounded-md shadow-lg max-h-[200px] overflow-y-auto py-1 min-w-[160px]"
+                        >
+                          {bulkReceiverNameOptions.map((option, index) => (
+                            <div
+                              key={index}
+                              onClick={() =>
+                                handleBulkReceiverNameSelect(option)
+                              }
+                              onMouseEnter={() =>
+                                setBulkHighlightedIndex(index)
+                              }
+                              className={`px-3 py-1.5 text-sm cursor-pointer ${
+                                bulkHighlightedIndex === index
+                                  ? "bg-gray-100 text-gray-800"
+                                  : "text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              {option || "選択なし"}
+                            </div>
+                          ))}
+                        </div>,
+                        document.body,
+                      )}
                   </div>
                 )}
               </div>
@@ -243,7 +276,10 @@ export function ReceiptTable({
               <div className="flex justify-between text-sm text-gray-600">
                 <span>合計: {receipts.length}件</span>
                 <span>
-                  ¥{receipts.reduce((sum, r) => sum + (r.amount || 0), 0).toLocaleString()}
+                  ¥
+                  {receipts
+                    .reduce((sum, r) => sum + (r.amount || 0), 0)
+                    .toLocaleString()}
                 </span>
               </div>
             </td>

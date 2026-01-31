@@ -21,7 +21,9 @@ type SupportedImageExtension = "jpeg" | "png";
 /**
  * ファイルパスから画像拡張子を取得
  */
-function getImageExtension(filePath: string): SupportedImageExtension | undefined {
+function getImageExtension(
+  filePath: string,
+): SupportedImageExtension | undefined {
   const ext = filePath.split(".").pop()?.toLowerCase();
   if (ext === "jpg" || ext === "jpeg") return "jpeg";
   if (ext === "png") return "png";
@@ -83,7 +85,7 @@ function parseIssuesText(issuesText: string): ValidationIssue[] {
  */
 export async function loadReceiptsFromExcel(
   yearMonth: string,
-  directoryPath?: string
+  directoryPath?: string,
 ): Promise<ReceiptData[] | null> {
   const savePath = await getSummaryExcelPath(yearMonth);
 
@@ -127,8 +129,12 @@ export async function loadReceiptsFromExcel(
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return;
 
-    const fileColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.FileName) : oldFormatIndices.fileName;
-    const linkColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.OriginalFileLink) : oldFormatIndices.originalFileLink;
+    const fileColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.FileName)
+      : oldFormatIndices.fileName;
+    const linkColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.OriginalFileLink)
+      : oldFormatIndices.originalFileLink;
 
     const file = String(row.getCell(fileColIndex).value ?? "");
     const linkCell = row.getCell(linkColIndex);
@@ -137,9 +143,16 @@ export async function loadReceiptsFromExcel(
 
     // ハイパーリンクから取得、またはテキストから取得
     let filePath: string;
-    if (filePathCellHyperlink && !filePathCellHyperlink.includes("[object Object]")) {
+    if (
+      filePathCellHyperlink &&
+      !filePathCellHyperlink.includes("[object Object]")
+    ) {
       filePath = filePathCellHyperlink;
-    } else if (typeof filePathCellValue === "object" && filePathCellValue !== null && "text" in filePathCellValue) {
+    } else if (
+      typeof filePathCellValue === "object" &&
+      filePathCellValue !== null &&
+      "text" in filePathCellValue
+    ) {
       const text = String((filePathCellValue as { text: unknown }).text);
       if (!text.includes("[object Object]")) {
         filePath = text;
@@ -153,15 +166,29 @@ export async function loadReceiptsFromExcel(
     }
 
     // filePathが壊れている場合、directoryPath + file で復元
-    if ((!filePath || filePath.includes("[object Object]")) && directoryPath && file) {
+    if (
+      (!filePath || filePath.includes("[object Object]")) &&
+      directoryPath &&
+      file
+    ) {
       filePath = `${directoryPath}/${file}`;
     }
 
-    const dateColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Date) : oldFormatIndices.date;
-    const merchantColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Merchant) : oldFormatIndices.merchant;
-    const amountColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Amount) : oldFormatIndices.amount;
-    const currencyColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.Currency) : oldFormatIndices.currency;
-    const issuesColIndex = isNewFormat ? getColumnIndex(ExcelColumnLabel.ValidationIssues) : oldFormatIndices.validationIssues;
+    const dateColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.Date)
+      : oldFormatIndices.date;
+    const merchantColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.Merchant)
+      : oldFormatIndices.merchant;
+    const amountColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.Amount)
+      : oldFormatIndices.amount;
+    const currencyColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.Currency)
+      : oldFormatIndices.currency;
+    const issuesColIndex = isNewFormat
+      ? getColumnIndex(ExcelColumnLabel.ValidationIssues)
+      : oldFormatIndices.validationIssues;
 
     const dateValue = row.getCell(dateColIndex).value;
     const merchantValue = row.getCell(merchantColIndex).value;
@@ -181,15 +208,24 @@ export async function loadReceiptsFromExcel(
     let accountCategory: string | undefined;
     let note: string | undefined;
     if (isNewFormat) {
-      const receiverNameValue = row.getCell(getColumnIndex(ExcelColumnLabel.ReceiverName)).value;
-      const accountCategoryValue = row.getCell(getColumnIndex(ExcelColumnLabel.AccountCategory)).value;
-      const noteValue = row.getCell(getColumnIndex(ExcelColumnLabel.Note)).value;
+      const receiverNameValue = row.getCell(
+        getColumnIndex(ExcelColumnLabel.ReceiverName),
+      ).value;
+      const accountCategoryValue = row.getCell(
+        getColumnIndex(ExcelColumnLabel.AccountCategory),
+      ).value;
+      const noteValue = row.getCell(
+        getColumnIndex(ExcelColumnLabel.Note),
+      ).value;
       receiverName = receiverNameValue ? String(receiverNameValue) : undefined;
-      accountCategory = accountCategoryValue ? String(accountCategoryValue) : undefined;
+      accountCategory = accountCategoryValue
+        ? String(accountCategoryValue)
+        : undefined;
       note = noteValue ? String(noteValue) : undefined;
     }
 
-    const hasOcrData = date !== undefined || merchant !== undefined || amount !== undefined;
+    const hasOcrData =
+      date !== undefined || merchant !== undefined || amount !== undefined;
     const status = hasOcrData ? "success" : "pending";
 
     receipts.push({
@@ -214,7 +250,9 @@ export async function loadReceiptsFromExcel(
 /**
  * サマリーExcelファイルが存在するか確認
  */
-export async function checkSummaryExcelExists(yearMonth: string): Promise<boolean> {
+export async function checkSummaryExcelExists(
+  yearMonth: string,
+): Promise<boolean> {
   if (!yearMonth) return false;
   const savePath = await getSummaryExcelPath(yearMonth);
   return exists(savePath);
@@ -226,7 +264,7 @@ export async function checkSummaryExcelExists(yearMonth: string): Promise<boolea
  */
 export async function saveReceiptsToExcel(
   receipts: ReceiptData[],
-  yearMonth: string
+  yearMonth: string,
 ): Promise<void> {
   if (receipts.length === 0) {
     return;
@@ -241,7 +279,7 @@ export async function saveReceiptsToExcel(
  */
 export async function openSummaryExcel(
   receipts: ReceiptData[],
-  yearMonth: string
+  yearMonth: string,
 ): Promise<void> {
   const savePath = await getSummaryExcelPath(yearMonth);
 
@@ -266,9 +304,8 @@ export async function openSummaryExcel(
  */
 async function generateSummaryExcel(
   receipts: ReceiptData[],
-  savePath: string
+  savePath: string,
 ): Promise<void> {
-
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Summary");
 
@@ -305,20 +342,28 @@ async function generateSummaryExcel(
 
     // 通貨コードがJPY以外の場合は赤字で太字にする
     if (receipt.currency && receipt.currency !== "JPY") {
-      const currencyCell = row.getCell(getColumnIndex(ExcelColumnLabel.Currency));
+      const currencyCell = row.getCell(
+        getColumnIndex(ExcelColumnLabel.Currency),
+      );
       currencyCell.font = { color: { argb: "FFCC0000" }, bold: true };
     }
 
     // 検証結果列の文字色を設定
     if (receipt.issues && receipt.issues.length > 0) {
-      const issuesCell = row.getCell(getColumnIndex(ExcelColumnLabel.ValidationIssues));
-      const hasError = receipt.issues.some((issue) => issue.severity === "error");
+      const issuesCell = row.getCell(
+        getColumnIndex(ExcelColumnLabel.ValidationIssues),
+      );
+      const hasError = receipt.issues.some(
+        (issue) => issue.severity === "error",
+      );
       issuesCell.font = {
         color: { argb: hasError ? "FFCC0000" : "FFCC6600" },
       };
     }
 
-    const previewCell = row.getCell(getColumnIndex(ExcelColumnLabel.ImagePreview));
+    const previewCell = row.getCell(
+      getColumnIndex(ExcelColumnLabel.ImagePreview),
+    );
     previewCell.value = "プレビューなし";
     previewCell.alignment = { vertical: "middle", horizontal: "center" };
 
@@ -338,7 +383,9 @@ async function generateSummaryExcel(
         if (receipt.thumbnailDataUrl) {
           // DataURLからBase64部分を抽出
           const base64Data = receipt.thumbnailDataUrl.split(",")[1];
-          const buffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+          const buffer = Uint8Array.from(atob(base64Data), (c) =>
+            c.charCodeAt(0),
+          );
           imageId = workbook.addImage({
             buffer: buffer,
             extension: "png",
@@ -363,8 +410,13 @@ async function generateSummaryExcel(
     }
 
     // ハイパーリンク設定（filePathが文字列であることを保証）
-    const linkCell = row.getCell(getColumnIndex(ExcelColumnLabel.OriginalFileLink));
-    const safeFilePath = typeof receipt.filePath === "string" ? receipt.filePath : String(receipt.filePath ?? "");
+    const linkCell = row.getCell(
+      getColumnIndex(ExcelColumnLabel.OriginalFileLink),
+    );
+    const safeFilePath =
+      typeof receipt.filePath === "string"
+        ? receipt.filePath
+        : String(receipt.filePath ?? "");
     linkCell.value = {
       text: safeFilePath,
       hyperlink: safeFilePath,

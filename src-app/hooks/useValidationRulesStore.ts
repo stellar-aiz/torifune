@@ -57,7 +57,7 @@ export function useValidationRulesStore(): UseValidationRulesStoreReturn {
       if (settings && settings.rules && settings.rules.length > 0) {
         // 新しい組み込みルールがあればマージ
         const { rules: mergedRules, hasNewRules } = mergeWithDefaultRules(
-          settings.rules
+          settings.rules,
         );
         if (hasNewRules) {
           const updatedSettings: ValidationRulesSettings = {
@@ -75,7 +75,9 @@ export function useValidationRulesStore(): UseValidationRulesStoreReturn {
       }
     } catch (e) {
       setError(
-        e instanceof Error ? e.message : "バリデーションルールの読み込みに失敗しました"
+        e instanceof Error
+          ? e.message
+          : "バリデーションルールの読み込みに失敗しました",
       );
     } finally {
       setIsLoading(false);
@@ -87,16 +89,16 @@ export function useValidationRulesStore(): UseValidationRulesStoreReturn {
     async (id: string, updates: Partial<ValidationRule>) => {
       try {
         const newRules = rules.map((rule) =>
-          rule.id === id ? { ...rule, ...updates } : rule
+          rule.id === id ? { ...rule, ...updates } : rule,
         );
         await saveRules(newRules);
       } catch (e) {
         throw new Error(
-          e instanceof Error ? e.message : "ルールの更新に失敗しました"
+          e instanceof Error ? e.message : "ルールの更新に失敗しました",
         );
       }
     },
-    [rules, saveRules]
+    [rules, saveRules],
   );
 
   /** デフォルトにリセット */
@@ -107,7 +109,7 @@ export function useValidationRulesStore(): UseValidationRulesStoreReturn {
       setRules(defaultSettings.rules);
     } catch (e) {
       throw new Error(
-        e instanceof Error ? e.message : "リセットに失敗しました"
+        e instanceof Error ? e.message : "リセットに失敗しました",
       );
     }
   }, []);

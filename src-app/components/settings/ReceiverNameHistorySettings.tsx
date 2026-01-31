@@ -97,7 +97,9 @@ export function ReceiverNameHistorySettings() {
                 key={name}
                 className="flex items-center justify-between px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
               >
-                <span className="text-sm text-gray-700 truncate flex-1">{name}</span>
+                <span className="text-sm text-gray-700 truncate flex-1">
+                  {name}
+                </span>
                 <button
                   onClick={() => removeRegisteredName(name)}
                   className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
@@ -142,7 +144,9 @@ export function ReceiverNameHistorySettings() {
                 key={name}
                 className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <span className="text-sm text-gray-700 truncate flex-1">{name}</span>
+                <span className="text-sm text-gray-700 truncate flex-1">
+                  {name}
+                </span>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => promoteToRegistered(name)}

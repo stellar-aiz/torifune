@@ -180,7 +180,9 @@ function SortableRuleItem({
         />
       ) : (
         <div
-          onClick={() => handleStartEdit("accountCategory", rule.accountCategory)}
+          onClick={() =>
+            handleStartEdit("accountCategory", rule.accountCategory)
+          }
           className="w-28 text-sm text-gray-800 truncate cursor-pointer hover:bg-gray-100 px-2 py-0.5 rounded flex-shrink-0"
           title={`勘定科目: ${rule.accountCategory}`}
         >
@@ -359,7 +361,7 @@ export function AccountCategoryRulesSettings() {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = useCallback(
@@ -373,28 +375,28 @@ export function AccountCategoryRulesSettings() {
         reorderRules(newRules);
       }
     },
-    [rules, reorderRules]
+    [rules, reorderRules],
   );
 
   const handleToggleEnabled = useCallback(
     (id: string, enabled: boolean) => {
       updateRule(id, { enabled });
     },
-    [updateRule]
+    [updateRule],
   );
 
   const handleDelete = useCallback(
     (id: string) => {
       deleteRule(id);
     },
-    [deleteRule]
+    [deleteRule],
   );
 
   const handleUpdate = useCallback(
     (id: string, updates: Partial<AccountCategoryRule>) => {
       updateRule(id, updates);
     },
-    [updateRule]
+    [updateRule],
   );
 
   const handleAddRule = useCallback(
@@ -402,7 +404,7 @@ export function AccountCategoryRulesSettings() {
       await addRule(rule);
       setIsAddingNew(false);
     },
-    [addRule]
+    [addRule],
   );
 
   const handleResetToDefault = useCallback(async () => {
@@ -514,7 +516,9 @@ export function AccountCategoryRulesSettings() {
             }
           `}
         >
-          <FiRefreshCw className={`w-4 h-4 ${isResetting ? "animate-spin" : ""}`} />
+          <FiRefreshCw
+            className={`w-4 h-4 ${isResetting ? "animate-spin" : ""}`}
+          />
           デフォルトに戻す
         </button>
       </div>

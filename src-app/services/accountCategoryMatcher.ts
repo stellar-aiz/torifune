@@ -11,7 +11,7 @@ import type { AccountCategoryRule } from "../types/accountCategoryRule";
  */
 export function matchAccountCategory(
   merchant: string | undefined,
-  rules: AccountCategoryRule[]
+  rules: AccountCategoryRule[],
 ): string | undefined {
   if (!merchant) {
     return undefined;
@@ -41,7 +41,7 @@ export function matchAccountCategory(
  */
 export function validatePattern(
   pattern: string,
-  flags: string
+  flags: string,
 ): { valid: boolean; error?: string } {
   if (!pattern.trim()) {
     return { valid: false, error: "パターンを入力してください" };

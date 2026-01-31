@@ -11,10 +11,22 @@ interface ThirdPartyLicense {
 const thirdPartyLicenses: ThirdPartyLicense[] = [
   { name: "Tauri", license: "Apache-2.0 OR MIT", url: "https://tauri.app/" },
   { name: "React", license: "MIT", url: "https://react.dev/" },
-  { name: "TypeScript", license: "Apache-2.0", url: "https://www.typescriptlang.org/" },
+  {
+    name: "TypeScript",
+    license: "Apache-2.0",
+    url: "https://www.typescriptlang.org/",
+  },
   { name: "Tailwind CSS", license: "MIT", url: "https://tailwindcss.com/" },
-  { name: "pdfjs-dist", license: "Apache-2.0", url: "https://mozilla.github.io/pdf.js/" },
-  { name: "react-icons", license: "MIT", url: "https://react-icons.github.io/react-icons/" },
+  {
+    name: "pdfjs-dist",
+    license: "Apache-2.0",
+    url: "https://mozilla.github.io/pdf.js/",
+  },
+  {
+    name: "react-icons",
+    license: "MIT",
+    url: "https://react-icons.github.io/react-icons/",
+  },
 ];
 
 export function AboutSettings() {
@@ -38,7 +50,9 @@ export function AboutSettings() {
     <div className="space-y-6">
       {/* アプリ情報 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700">アプリケーション情報</h3>
+        <h3 className="text-sm font-semibold text-gray-700">
+          アプリケーション情報
+        </h3>
 
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
@@ -47,7 +61,9 @@ export function AboutSettings() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">バージョン</span>
-            <span className="text-sm font-medium text-gray-800">{version || "読み込み中..."}</span>
+            <span className="text-sm font-medium text-gray-800">
+              {version || "読み込み中..."}
+            </span>
           </div>
         </div>
       </div>
@@ -59,11 +75,15 @@ export function AboutSettings() {
         <div className="bg-gray-50 rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">ライセンス</span>
-            <span className="text-sm font-medium text-gray-800">Apache-2.0</span>
+            <span className="text-sm font-medium text-gray-800">
+              Apache-2.0
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">著作権</span>
-            <span className="text-sm font-medium text-gray-800">Copyright 2025 Stellar AIZ</span>
+            <span className="text-sm font-medium text-gray-800">
+              Copyright 2025 Stellar AIZ
+            </span>
           </div>
           <div className="pt-2 border-t border-gray-200">
             <a
@@ -81,7 +101,9 @@ export function AboutSettings() {
 
       {/* サードパーティライセンス */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-700">サードパーティライセンス</h3>
+        <h3 className="text-sm font-semibold text-gray-700">
+          サードパーティライセンス
+        </h3>
 
         <div className="bg-gray-50 rounded-lg overflow-hidden">
           <button
@@ -89,7 +111,8 @@ export function AboutSettings() {
             className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-100 transition-colors"
           >
             <span className="text-sm font-medium text-gray-700">
-              使用しているオープンソースソフトウェア ({thirdPartyLicenses.length})
+              使用しているオープンソースソフトウェア (
+              {thirdPartyLicenses.length})
             </span>
             {isLicensesExpanded ? (
               <FiChevronDown className="w-4 h-4 text-gray-500" />
@@ -116,7 +139,9 @@ export function AboutSettings() {
                         {lib.name}
                       </a>
                     ) : (
-                      <span className="text-sm font-medium text-gray-800">{lib.name}</span>
+                      <span className="text-sm font-medium text-gray-800">
+                        {lib.name}
+                      </span>
                     )}
                   </div>
                   <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">

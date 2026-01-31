@@ -1,4 +1,10 @@
-import { FiPlay, FiDownload, FiTrash2, FiLoader, FiCheckCircle } from "react-icons/fi";
+import {
+  FiPlay,
+  FiDownload,
+  FiTrash2,
+  FiLoader,
+  FiCheckCircle,
+} from "react-icons/fi";
 
 interface ActionBarProps {
   canStartOcr: boolean;
@@ -73,7 +79,8 @@ export function ActionBar({
             </div>
             {/* Progress text */}
             <span className="text-xs text-gray-600">
-              {processingProgress.completed} / {processingProgress.total} 処理済み
+              {processingProgress.completed} / {processingProgress.total}{" "}
+              処理済み
             </span>
           </div>
         )}

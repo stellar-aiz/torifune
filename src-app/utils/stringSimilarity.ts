@@ -16,7 +16,7 @@ function levenshteinDistance(s1: string, s2: string): number {
   const m = s1.length;
   const n = s2.length;
   const dp: number[][] = Array.from({ length: m + 1 }, () =>
-    Array(n + 1).fill(0)
+    Array(n + 1).fill(0),
   );
 
   for (let i = 0; i <= m; i++) dp[i][0] = i;
@@ -28,7 +28,7 @@ function levenshteinDistance(s1: string, s2: string): number {
       dp[i][j] = Math.min(
         dp[i - 1][j] + 1,
         dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + cost
+        dp[i - 1][j - 1] + cost,
       );
     }
   }
@@ -51,7 +51,7 @@ export function calculateSimilarity(s1: string, s2: string): number {
 export function isMerchantSimilar(
   name1: string,
   name2: string,
-  threshold = 0.85
+  threshold = 0.85,
 ): boolean {
   return calculateSimilarity(name1, name2) >= threshold;
 }

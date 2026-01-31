@@ -6,7 +6,10 @@
 
 import { useEffect, useCallback, useSyncExternalStore } from "react";
 import type { ReceiverNameSettings } from "../types/receiverNameHistory";
-import { createEmptySettings, migrateFromV1 } from "../types/receiverNameHistory";
+import {
+  createEmptySettings,
+  migrateFromV1,
+} from "../types/receiverNameHistory";
 import {
   getReceiverNameHistory,
   saveReceiverNameHistory,
@@ -73,7 +76,10 @@ async function loadSettingsGlobal(): Promise<void> {
       } else if (data.names) {
         // v1形式からマイグレーション
         const migrated = migrateFromV1(data);
-        await saveSettingsGlobal(migrated.registeredNames, migrated.historyNames);
+        await saveSettingsGlobal(
+          migrated.registeredNames,
+          migrated.historyNames,
+        );
         setGlobalState({
           registeredNames: migrated.registeredNames,
           historyNames: migrated.historyNames,
@@ -109,7 +115,7 @@ async function loadSettingsGlobal(): Promise<void> {
 
 async function saveSettingsGlobal(
   registeredNames: string[],
-  historyNames: string[]
+  historyNames: string[],
 ): Promise<void> {
   const settings: ReceiverNameSettings = {
     registeredNames,
@@ -127,14 +133,18 @@ async function addRegisteredNameGlobal(name: string): Promise<void> {
 
   try {
     // 登録済みから重複を除外して先頭に追加
-    const filteredRegistered = globalState.registeredNames.filter((n) => n !== trimmedName);
+    const filteredRegistered = globalState.registeredNames.filter(
+      (n) => n !== trimmedName,
+    );
     const newRegistered = [trimmedName, ...filteredRegistered];
     // 履歴からも削除（登録済みに昇格したので）
-    const newHistory = globalState.historyNames.filter((n) => n !== trimmedName);
+    const newHistory = globalState.historyNames.filter(
+      (n) => n !== trimmedName,
+    );
     await saveSettingsGlobal(newRegistered, newHistory);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "宛名の追加に失敗しました"
+      e instanceof Error ? e.message : "宛名の追加に失敗しました",
     );
   }
 }
@@ -151,12 +161,14 @@ async function addToHistoryGlobal(name: string): Promise<void> {
 
   try {
     // 履歴から重複を除外して先頭に追加
-    const filteredHistory = globalState.historyNames.filter((n) => n !== trimmedName);
+    const filteredHistory = globalState.historyNames.filter(
+      (n) => n !== trimmedName,
+    );
     const newHistory = [trimmedName, ...filteredHistory];
     await saveSettingsGlobal(globalState.registeredNames, newHistory);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "履歴の追加に失敗しました"
+      e instanceof Error ? e.message : "履歴の追加に失敗しました",
     );
   }
 }
@@ -167,12 +179,14 @@ async function promoteToRegisteredGlobal(name: string): Promise<void> {
     // 履歴から削除
     const newHistory = globalState.historyNames.filter((n) => n !== name);
     // 登録済みに追加（重複除外して先頭に）
-    const filteredRegistered = globalState.registeredNames.filter((n) => n !== name);
+    const filteredRegistered = globalState.registeredNames.filter(
+      (n) => n !== name,
+    );
     const newRegistered = [name, ...filteredRegistered];
     await saveSettingsGlobal(newRegistered, newHistory);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "宛名の登録に失敗しました"
+      e instanceof Error ? e.message : "宛名の登録に失敗しました",
     );
   }
 }
@@ -184,7 +198,7 @@ async function removeRegisteredNameGlobal(name: string): Promise<void> {
     await saveSettingsGlobal(newRegistered, globalState.historyNames);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "宛名の削除に失敗しました"
+      e instanceof Error ? e.message : "宛名の削除に失敗しました",
     );
   }
 }
@@ -196,7 +210,7 @@ async function removeFromHistoryGlobal(name: string): Promise<void> {
     await saveSettingsGlobal(globalState.registeredNames, newHistory);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "履歴の削除に失敗しました"
+      e instanceof Error ? e.message : "履歴の削除に失敗しました",
     );
   }
 }
@@ -207,7 +221,7 @@ async function clearHistoryGlobal(): Promise<void> {
     await saveSettingsGlobal(globalState.registeredNames, []);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "履歴のクリアに失敗しました"
+      e instanceof Error ? e.message : "履歴のクリアに失敗しました",
     );
   }
 }
@@ -218,7 +232,7 @@ async function clearRegisteredGlobal(): Promise<void> {
     await saveSettingsGlobal([], globalState.historyNames);
   } catch (e) {
     throw new Error(
-      e instanceof Error ? e.message : "登録済み宛名のクリアに失敗しました"
+      e instanceof Error ? e.message : "登録済み宛名のクリアに失敗しました",
     );
   }
 }

@@ -38,7 +38,9 @@ export function EditableCell({
   // Memoize options array to avoid recomputation
   const allOptions = useMemo(() => {
     const baseOptions = ["", ...(options ?? [])];
-    return allowCustomInput ? [...baseOptions, CUSTOM_INPUT_OPTION] : baseOptions;
+    return allowCustomInput
+      ? [...baseOptions, CUSTOM_INPUT_OPTION]
+      : baseOptions;
   }, [options, allowCustomInput]);
 
   // Sync edit value when external value changes
@@ -61,8 +63,10 @@ export function EditableCell({
     if (!isDropdownOpen) return;
     const handleMouseDown = (e: MouseEvent) => {
       if (
-        triggerRef.current && !triggerRef.current.contains(e.target as Node) &&
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
       ) {
         setIsDropdownOpen(false);
       }
@@ -81,12 +85,12 @@ export function EditableCell({
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          prev < allOptions.length - 1 ? prev + 1 : 0
+          prev < allOptions.length - 1 ? prev + 1 : 0,
         );
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          prev > 0 ? prev - 1 : allOptions.length - 1
+          prev > 0 ? prev - 1 : allOptions.length - 1,
         );
       } else if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) {
         e.preventDefault();
@@ -104,7 +108,14 @@ export function EditableCell({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isDropdownOpen, highlightedIndex, allOptions, value, onChange, onValueConfirmed]);
+  }, [
+    isDropdownOpen,
+    highlightedIndex,
+    allOptions,
+    value,
+    onChange,
+    onValueConfirmed,
+  ]);
 
   // Reset highlightedIndex when dropdown opens
   useEffect(() => {
@@ -130,7 +141,11 @@ export function EditableCell({
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       // Skip if IME composition is in progress (keyCode 229 is IME processing)
-      if (isComposingRef.current || e.nativeEvent.isComposing || e.keyCode === 229) {
+      if (
+        isComposingRef.current ||
+        e.nativeEvent.isComposing ||
+        e.keyCode === 229
+      ) {
         return;
       }
       if (e.key === "Enter") {
@@ -141,7 +156,7 @@ export function EditableCell({
         handleCancel();
       }
     },
-    [handleSave, handleCancel]
+    [handleSave, handleCancel],
   );
 
   const handleClick = () => {
@@ -198,8 +213,10 @@ export function EditableCell({
           >
             {allOptions.map((option, index) => {
               const getOptionStyle = (): string => {
-                if (option === value) return "bg-blue-50 text-blue-700 font-medium";
-                if (highlightedIndex === index) return "bg-gray-100 text-gray-800";
+                if (option === value)
+                  return "bg-blue-50 text-blue-700 font-medium";
+                if (highlightedIndex === index)
+                  return "bg-gray-100 text-gray-800";
                 return "text-gray-700 hover:bg-gray-50";
               };
               return (
@@ -252,8 +269,12 @@ export function EditableCell({
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        onCompositionStart={() => { isComposingRef.current = true; }}
-        onCompositionEnd={() => { isComposingRef.current = false; }}
+        onCompositionStart={() => {
+          isComposingRef.current = true;
+        }}
+        onCompositionEnd={() => {
+          isComposingRef.current = false;
+        }}
         className={`w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${className}`}
       />
     );

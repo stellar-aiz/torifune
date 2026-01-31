@@ -11,7 +11,7 @@ import { readFile } from "@tauri-apps/plugin-fs";
 // PDF.js Worker の設定（Vite用）
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
+  import.meta.url,
 ).toString();
 
 /**
@@ -105,7 +105,7 @@ async function generatePdfThumbnail(data: Uint8Array): Promise<string> {
  */
 async function generateImageThumbnail(
   data: Uint8Array,
-  mimeType: string
+  mimeType: string,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const blob = new Blob([data], { type: mimeType });
@@ -153,4 +153,3 @@ async function generateImageThumbnail(
     img.src = url;
   });
 }
-
