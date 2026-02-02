@@ -31,6 +31,27 @@ function getImageExtension(
 }
 
 /**
+ * レシートを日付順（昇順）でソートする
+ * 日付が undefined または空文字の場合は末尾に配置
+ */
+function sortReceiptsByDate(receipts: ReceiptData[]): ReceiptData[] {
+  return [...receipts].sort((a, b) => {
+    const dateA = a.date ?? "";
+    const dateB = b.date ?? "";
+
+    // 両方空の場合は元の順序を維持
+    if (dateA === "" && dateB === "") return 0;
+    // dateA が空なら末尾へ
+    if (dateA === "") return 1;
+    // dateB が空なら末尾へ
+    if (dateB === "") return -1;
+
+    // YYYY-MM-DD 形式は文字列比較で正しくソートできる
+    return dateA.localeCompare(dateB);
+  });
+}
+
+/**
  * サマリーExcelファイルのパスを取得
  */
 async function getSummaryExcelPath(yearMonth: string): Promise<string> {
@@ -316,7 +337,10 @@ async function generateSummaryExcel(
   sheet.views = [{ state: "frozen", ySplit: 1 }];
   sheet.getRow(1).font = { bold: true };
 
-  for (const receipt of receipts) {
+  // 日付順でソート（昇順、undefined は末尾）
+  const sortedReceipts = sortReceiptsByDate(receipts);
+
+  for (const receipt of sortedReceipts) {
     // 検証結果テキストを生成
     const issuesText =
       receipt.issues
