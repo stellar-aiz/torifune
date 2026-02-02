@@ -1,12 +1,14 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "torifune",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "identifier": "com.stellar-aiz.torifune",
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["torifune"]
+        "schemes": [
+          "torifune"
+        ]
       }
     }
   },
