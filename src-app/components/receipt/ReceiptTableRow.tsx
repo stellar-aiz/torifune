@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { ask } from "@tauri-apps/plugin-dialog";
 import {
   FiTrash2,
   FiCheckCircle,
@@ -21,8 +20,8 @@ import { useReceiverNameHistoryStore } from "../../hooks/useReceiverNameHistoryS
 interface ReceiptTableRowProps {
   receipt: ReceiptData;
   yearMonth: string;
-  onRemove: () => void;
   onUpdate: (updates: Partial<ReceiptData>) => void;
+  onRequestDelete?: (receipt: ReceiptData) => void;
   isFilenameCollapsed: boolean;
   isMerchantCollapsed: boolean;
   isReceiverNameCollapsed: boolean;
@@ -31,8 +30,8 @@ interface ReceiptTableRowProps {
 export function ReceiptTableRow({
   receipt,
   yearMonth,
-  onRemove,
   onUpdate,
+  onRequestDelete,
   isFilenameCollapsed,
   isMerchantCollapsed,
   isReceiverNameCollapsed,
@@ -109,18 +108,12 @@ export function ReceiptTableRow({
   }
 
   const handleRemoveClick = useCallback(
-    async (e: React.MouseEvent) => {
+    (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      const confirmed = await ask(`「${receipt.file}」を削除しますか？`, {
-        title: "削除の確認",
-        kind: "warning",
-      });
-      if (confirmed) {
-        onRemove();
-      }
+      onRequestDelete?.(receipt);
     },
-    [receipt.file, onRemove],
+    [receipt, onRequestDelete],
   );
 
   function renderValidationColumn(): React.ReactElement {

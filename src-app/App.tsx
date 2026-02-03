@@ -6,7 +6,7 @@ import { ActionBar } from "./components/action/ActionBar";
 import { SettingsModal } from "./components/settings/SettingsModal";
 import { DeleteConfirmModal } from "./components/month/DeleteConfirmModal";
 import { useReceiptStore } from "./hooks/useReceiptStore";
-import { formatMonthName } from "./types/receipt";
+import { formatMonthName, type ReceiptData } from "./types/receipt";
 import { getRootDirectory, moveToTrash } from "./services/tauri/commands";
 import { openSummaryExcel } from "./services/excel/exporter";
 import { revealItemInDir } from "@tauri-apps/plugin-opener";
@@ -22,6 +22,8 @@ function App() {
   const [pendingDeleteMonthId, setPendingDeleteMonthId] = useState<
     string | null
   >(null);
+  const [pendingDeleteReceipt, setPendingDeleteReceipt] =
+    useState<ReceiptData | null>(null);
   const store = useReceiptStore();
   const [toast, setToast] = useState<{
     message: string;
@@ -180,6 +182,50 @@ function App() {
     [pendingDeleteMonthId, store],
   );
 
+  // 個別レシート削除リクエストハンドラ
+  const handleRequestDeleteReceipt = useCallback((receipt: ReceiptData) => {
+    setPendingDeleteReceipt(receipt);
+  }, []);
+
+  // 個別レシート削除確認時のハンドラ
+  const handleConfirmDeleteReceipt = useCallback(
+    async (deletePhysically: boolean) => {
+      if (!pendingDeleteReceipt) return;
+
+      if (deletePhysically) {
+        try {
+          // 元ファイルをゴミ箱へ
+          await moveToTrash(pendingDeleteReceipt.filePath);
+
+          // サムネイルもゴミ箱へ（存在しない場合はエラー無視）
+          const rootDir = await getRootDirectory();
+          const yearMonth = currentMonth?.yearMonth;
+          if (yearMonth) {
+            const year = yearMonth.slice(0, 4);
+            const month = yearMonth.slice(4, 6);
+            const thumbnailPath = `${rootDir}/${year}/${month}/thumbnails/${pendingDeleteReceipt.file}.thumbnail.png`;
+            try {
+              await moveToTrash(thumbnailPath);
+            } catch {
+              console.warn("サムネイルの削除に失敗（存在しない可能性）");
+            }
+          }
+        } catch (error) {
+          console.error("ファイル削除エラー:", error);
+        }
+      }
+
+      store.removeReceipt(pendingDeleteReceipt.id);
+      setPendingDeleteReceipt(null);
+    },
+    [pendingDeleteReceipt, currentMonth, store],
+  );
+
+  // 個別レシート削除キャンセルハンドラ
+  const handleCancelDeleteReceipt = useCallback(() => {
+    setPendingDeleteReceipt(null);
+  }, []);
+
   return (
     <div className="h-screen flex bg-gray-50">
       {/* サイドバー */}
@@ -243,8 +289,8 @@ function App() {
                 <ReceiptList
                   receipts={store.sortedReceipts}
                   yearMonth={currentMonth?.yearMonth ?? ""}
-                  onRemove={store.removeReceipt}
                   onUpdateReceipt={store.updateReceipt}
+                  onRequestDelete={handleRequestDeleteReceipt}
                   onBulkUpdateReceiverName={handleBulkUpdateReceiverName}
                   sortConfig={store.sortConfig}
                   onToggleSort={store.toggleSort}
@@ -316,6 +362,13 @@ function App() {
         }}
         onConfirm={handleConfirmDelete}
         monthName={pendingMonthName}
+      />
+      <DeleteConfirmModal
+        isOpen={pendingDeleteReceipt !== null}
+        onClose={handleCancelDeleteReceipt}
+        onConfirm={handleConfirmDeleteReceipt}
+        monthName={pendingDeleteReceipt?.file ?? ""}
+        itemType="receipt"
       />
       {toast && (
         <Toast

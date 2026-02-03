@@ -16,8 +16,8 @@ import type { ReceiptData, SortConfig, SortField } from "../../types/receipt";
 interface ReceiptTableProps {
   receipts: ReceiptData[];
   yearMonth: string;
-  onRemove: (id: string) => void;
   onUpdateReceipt: (id: string, updates: Partial<ReceiptData>) => void;
+  onRequestDelete?: (receipt: ReceiptData) => void;
   onBulkUpdateReceiverName?: (name: string) => void;
   sortConfig: SortConfig;
   onToggleSort: (field: SortField) => void;
@@ -26,8 +26,8 @@ interface ReceiptTableProps {
 export function ReceiptTable({
   receipts,
   yearMonth,
-  onRemove,
   onUpdateReceipt,
+  onRequestDelete,
   onBulkUpdateReceiverName,
   sortConfig,
   onToggleSort,
@@ -262,8 +262,8 @@ export function ReceiptTable({
               key={receipt.id}
               receipt={receipt}
               yearMonth={yearMonth}
-              onRemove={() => onRemove(receipt.id)}
               onUpdate={(updates) => onUpdateReceipt(receipt.id, updates)}
+              onRequestDelete={onRequestDelete}
               isFilenameCollapsed={isFilenameColumnCollapsed}
               isMerchantCollapsed={isMerchantColumnCollapsed}
               isReceiverNameCollapsed={isReceiverNameColumnCollapsed}
