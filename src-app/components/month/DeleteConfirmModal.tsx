@@ -1,20 +1,48 @@
 import { useState } from "react";
 import { FiX, FiTrash2 } from "react-icons/fi";
 
+type ItemType = "month" | "receipt";
+
 interface DeleteConfirmModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (deletePhysically: boolean) => void;
   monthName: string;
+  itemType?: ItemType;
 }
+
+const itemTypeConfig: Record<
+  ItemType,
+  {
+    physicalDeleteLabel: string;
+    physicalDeleteDescription: string;
+    softDeleteLabel: string;
+    softDeleteDescription: string;
+  }
+> = {
+  month: {
+    physicalDeleteLabel: "物理ファイルも削除（ゴミ箱へ移動）",
+    physicalDeleteDescription: "フォルダごとゴミ箱に移動します",
+    softDeleteLabel: "torifuneから見えなくするだけ（ファイルは残る）",
+    softDeleteDescription: "アプリ上のデータのみ削除し、ファイルは残します",
+  },
+  receipt: {
+    physicalDeleteLabel: "ファイルも削除（ゴミ箱へ移動）",
+    physicalDeleteDescription: "ファイルとサムネイルをゴミ箱に移動します",
+    softDeleteLabel: "torifuneから見えなくするだけ（ファイルは残る）",
+    softDeleteDescription: "アプリ上のデータのみ削除し、ファイルは残します",
+  },
+};
 
 export function DeleteConfirmModal({
   isOpen,
   onClose,
   onConfirm,
   monthName,
+  itemType = "month",
 }: DeleteConfirmModalProps) {
   const [deletePhysically, setDeletePhysically] = useState(true);
+  const config = itemTypeConfig[itemType];
 
   const handleConfirm = () => {
     onConfirm(deletePhysically);
@@ -80,10 +108,10 @@ export function DeleteConfirmModal({
               />
               <div>
                 <p className="text-sm font-medium text-gray-800">
-                  物理ファイルも削除（ゴミ箱へ移動）
+                  {config.physicalDeleteLabel}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  フォルダごとゴミ箱に移動します
+                  {config.physicalDeleteDescription}
                 </p>
               </div>
             </label>
@@ -98,10 +126,10 @@ export function DeleteConfirmModal({
               />
               <div>
                 <p className="text-sm font-medium text-gray-800">
-                  torifuneから見えなくするだけ（ファイルは残る）
+                  {config.softDeleteLabel}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  アプリ上のデータのみ削除し、ファイルは残します
+                  {config.softDeleteDescription}
                 </p>
               </div>
             </label>
