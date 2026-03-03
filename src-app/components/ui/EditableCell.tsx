@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { FiChevronDown } from "react-icons/fi";
 import { InputModal } from "./InputModal";
+import { formatDateDisplay } from "../../utils/dateUtils";
+import { DatePicker } from "./DatePicker";
 
 const CUSTOM_INPUT_OPTION = "その他（手入力）";
 
@@ -159,10 +161,6 @@ export function EditableCell({
     [handleSave, handleCancel],
   );
 
-  const handleClick = () => {
-    setIsEditing(true);
-  };
-
   // Select type: custom dropdown (single click to open)
   if (type === "select") {
     const selectDisplayValue = value || placeholder || "選択";
@@ -212,13 +210,12 @@ export function EditableCell({
             className="z-50 bg-white border border-gray-200 rounded-md shadow-lg max-h-[280px] overflow-y-auto py-1"
           >
             {allOptions.map((option, index) => {
-              const getOptionStyle = (): string => {
-                if (option === value)
-                  return "bg-blue-50 text-blue-700 font-medium";
-                if (highlightedIndex === index)
-                  return "bg-gray-100 text-gray-800";
-                return "text-gray-700 hover:bg-gray-50";
-              };
+              let optionStyle = "text-gray-700 hover:bg-gray-50";
+              if (option === value) {
+                optionStyle = "bg-blue-50 text-blue-700 font-medium";
+              } else if (highlightedIndex === index) {
+                optionStyle = "bg-gray-100 text-gray-800";
+              }
               return (
                 <div
                   key={index}
@@ -232,7 +229,7 @@ export function EditableCell({
                     }
                   }}
                   onMouseEnter={() => setHighlightedIndex(index)}
-                  className={`px-3 py-1.5 text-sm cursor-pointer ${getOptionStyle()}`}
+                  className={`px-3 py-1.5 text-sm cursor-pointer ${optionStyle}`}
                 >
                   {option || "選択なし"}
                 </div>
@@ -254,6 +251,31 @@ export function EditableCell({
             }
           }}
           onCancel={() => setIsModalOpen(false)}
+        />
+      </div>
+    );
+  }
+
+  // Date editing mode: show DatePicker popup instead of native input
+  if (type === "date" && isEditing) {
+    return (
+      <div ref={triggerRef}>
+        <div
+          className={`text-sm rounded px-2 py-1 border border-blue-500 ring-2 ring-blue-500/20 ${className}`}
+        >
+          {formatDateDisplay(editValue) || <span className="text-gray-400 italic">{placeholder}</span>}
+        </div>
+        <DatePicker
+          value={editValue}
+          anchorRef={triggerRef}
+          onSelect={(isoDate) => {
+            setIsEditing(false);
+            if (isoDate !== value) {
+              onChange(isoDate);
+              onValueConfirmed?.(isoDate);
+            }
+          }}
+          onCancel={handleCancel}
         />
       </div>
     );
@@ -281,12 +303,12 @@ export function EditableCell({
   }
 
   // Text/date/number display mode
-  const displayValue = value || placeholder;
+  const displayValue = (type === "date" ? formatDateDisplay(value) : value) || placeholder;
   const isEmpty = !value;
 
   return (
     <div
-      onClick={handleClick}
+      onClick={() => setIsEditing(true)}
       className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 text-sm truncate transition-colors duration-150 ${
         isEmpty ? "text-gray-400 italic" : "text-gray-800"
       } ${className}`}
