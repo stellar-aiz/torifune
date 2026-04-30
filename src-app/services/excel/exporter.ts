@@ -90,14 +90,13 @@ async function getSummaryDirectory(yearMonth: string): Promise<string> {
 
 /**
  * 合計金額入りのファイル名を生成する
- * 例: yearMonth="202603", jpyTotal=2100 → "202603-summary-2,100円.xlsx"
+ * 例: yearMonth="202603", jpyTotal=2100 → "202603-summary-2100円.xlsx"
  */
 export function buildSummaryFileName(
   yearMonth: string,
   jpyTotal: number,
 ): string {
-  const formatted = jpyTotal.toLocaleString("en-US");
-  return `${getSummaryFileNamePrefix(yearMonth)}-${formatted}円.xlsx`;
+  return `${getSummaryFileNamePrefix(yearMonth)}-${jpyTotal}円.xlsx`;
 }
 
 /**

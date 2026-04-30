@@ -80,9 +80,9 @@ describe("calculateJpyTotal", () => {
 });
 
 describe("buildSummaryFileName", () => {
-  it("formats small total with comma separator", () => {
+  it("formats small total without comma separator", () => {
     expect(buildSummaryFileName("202603", 2100)).toBe(
-      "202603-summary-2,100円.xlsx",
+      "202603-summary-2100円.xlsx",
     );
   });
 
@@ -90,9 +90,9 @@ describe("buildSummaryFileName", () => {
     expect(buildSummaryFileName("202604", 0)).toBe("202604-summary-0円.xlsx");
   });
 
-  it("formats large total with multiple commas", () => {
+  it("formats large total without comma separator", () => {
     expect(buildSummaryFileName("202512", 1234567)).toBe(
-      "202512-summary-1,234,567円.xlsx",
+      "202512-summary-1234567円.xlsx",
     );
   });
 
