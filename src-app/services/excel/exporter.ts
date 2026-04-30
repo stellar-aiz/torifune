@@ -4,7 +4,13 @@
  */
 
 import ExcelJS from "exceljs";
-import { writeFile, readFile, exists } from "@tauri-apps/plugin-fs";
+import {
+  writeFile,
+  readFile,
+  exists,
+  readDir,
+  remove,
+} from "@tauri-apps/plugin-fs";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { nanoid } from "nanoid";
 import type { ReceiptData, ValidationIssue } from "../../types/receipt";
@@ -66,14 +72,113 @@ function sortReceiptsByDate(receipts: ReceiptData[]): ReceiptData[] {
   });
 }
 
+/** サマリー Excel ファイルの基本プレフィックス（"YYYYMM-summary"） */
+function getSummaryFileNamePrefix(yearMonth: string): string {
+  return `${yearMonth}-summary`;
+}
+
 /**
- * サマリーExcelファイルのパスを取得
+ * サマリー Excel が格納されるディレクトリのパスを返す
+ * （${rootDir}/${year}/${month}）
  */
-async function getSummaryExcelPath(yearMonth: string): Promise<string> {
+async function getSummaryDirectory(yearMonth: string): Promise<string> {
   const rootDir = await getRootDirectory();
   const year = yearMonth.slice(0, 4);
   const month = yearMonth.slice(4, 6);
-  return `${rootDir}/${year}/${month}/${yearMonth}-summary.xlsx`;
+  return `${rootDir}/${year}/${month}`;
+}
+
+/**
+ * 合計金額入りのファイル名を生成する
+ * 例: yearMonth="202603", jpyTotal=2100 → "202603-summary-2,100円.xlsx"
+ */
+export function buildSummaryFileName(
+  yearMonth: string,
+  jpyTotal: number,
+): string {
+  const formatted = jpyTotal.toLocaleString("en-US");
+  return `${getSummaryFileNamePrefix(yearMonth)}-${formatted}円.xlsx`;
+}
+
+/**
+ * 新規保存用のフルパスを返す（合計金額入りファイル名）
+ */
+async function getNewSummaryPath(
+  yearMonth: string,
+  jpyTotal: number,
+): Promise<string> {
+  const dir = await getSummaryDirectory(yearMonth);
+  return `${dir}/${buildSummaryFileName(yearMonth, jpyTotal)}`;
+}
+
+/**
+ * 既存のサマリー Excel ファイルパスを検索する
+ * - 新フォーマット (yearMonth-summary-XX,XXX円.xlsx) を優先
+ * - 旧フォーマット (yearMonth-summary.xlsx) も後方互換でヒット
+ * - 該当なしの場合は null を返す
+ */
+async function findExistingSummaryPath(
+  yearMonth: string,
+): Promise<string | null> {
+  const dir = await getSummaryDirectory(yearMonth);
+  if (!(await exists(dir))) return null;
+
+  const entries = await readDir(dir);
+  const prefix = getSummaryFileNamePrefix(yearMonth);
+
+  const matches = entries
+    .filter(
+      (e) =>
+        !e.isDirectory &&
+        e.name.startsWith(prefix) &&
+        e.name.endsWith(".xlsx"),
+    )
+    .map((e) => e.name);
+
+  if (matches.length === 0) return null;
+
+  // 新フォーマット（"円.xlsx" で終わる）を優先
+  matches.sort((a, b) => {
+    const aHasTotal = a.endsWith("円.xlsx");
+    const bHasTotal = b.endsWith("円.xlsx");
+    if (aHasTotal && !bHasTotal) return -1;
+    if (!aHasTotal && bHasTotal) return 1;
+    return 0;
+  });
+
+  return `${dir}/${matches[0]}`;
+}
+
+/**
+ * 同月の既存サマリーファイルのうち、keepPath 以外をすべて削除する
+ * - 旧フォーマット (yearMonth-summary.xlsx) も対象
+ * - 同月で合計値が変わった結果生成された古い "円" 入りファイルも対象
+ * - これにより 1 月 1 ファイルが保証される
+ */
+async function cleanupStaleSummaryFiles(
+  yearMonth: string,
+  keepPath: string,
+): Promise<void> {
+  const dir = await getSummaryDirectory(yearMonth);
+  if (!(await exists(dir))) return;
+
+  const entries = await readDir(dir);
+  const prefix = getSummaryFileNamePrefix(yearMonth);
+
+  for (const entry of entries) {
+    if (entry.isDirectory) continue;
+    if (!entry.name.startsWith(prefix)) continue;
+    if (!entry.name.endsWith(".xlsx")) continue;
+
+    const fullPath = `${dir}/${entry.name}`;
+    if (fullPath === keepPath) continue;
+
+    try {
+      await remove(fullPath);
+    } catch (error) {
+      console.warn(`Failed to remove stale summary file: ${fullPath}`, error);
+    }
+  }
 }
 
 /**
@@ -123,10 +228,8 @@ export async function loadReceiptsFromExcel(
   yearMonth: string,
   directoryPath?: string,
 ): Promise<ReceiptData[] | null> {
-  const savePath = await getSummaryExcelPath(yearMonth);
-
-  const fileExists = await exists(savePath);
-  if (!fileExists) {
+  const savePath = await findExistingSummaryPath(yearMonth);
+  if (!savePath) {
     return null;
   }
 
@@ -295,8 +398,8 @@ export async function checkSummaryExcelExists(
   yearMonth: string,
 ): Promise<boolean> {
   if (!yearMonth) return false;
-  const savePath = await getSummaryExcelPath(yearMonth);
-  return exists(savePath);
+  const savePath = await findExistingSummaryPath(yearMonth);
+  return savePath !== null;
 }
 
 /**
@@ -310,8 +413,11 @@ export async function saveReceiptsToExcel(
   if (receipts.length === 0) {
     return;
   }
-  const savePath = await getSummaryExcelPath(yearMonth);
+  const jpyTotal = calculateJpyTotal(receipts);
+  const savePath = await getNewSummaryPath(yearMonth, jpyTotal);
   await generateSummaryExcel(receipts, savePath);
+  // 同月の他のサマリーファイル（旧フォーマット・古い合計値の旧ファイル）を削除
+  await cleanupStaleSummaryFiles(yearMonth, savePath);
 }
 
 /**
@@ -322,18 +428,16 @@ export async function openSummaryExcel(
   receipts: ReceiptData[],
   yearMonth: string,
 ): Promise<void> {
-  const savePath = await getSummaryExcelPath(yearMonth);
-
-  // 処理済みのレシートがあれば新規生成
+  // 処理済みのレシートがあれば新規生成（同時に旧ファイルを cleanup）
   const successReceipts = receipts.filter((r) => r.status === "success");
   if (successReceipts.length > 0) {
     await saveReceiptsToExcel(successReceipts, yearMonth);
-  } else {
-    // レシートがない場合は既存ファイルを確認
-    const fileExists = await exists(savePath);
-    if (!fileExists) {
-      throw new Error("エクスポートするデータがありません");
-    }
+  }
+
+  // 保存後の実パスを取得（新規生成・既存ファイル両方カバー）
+  const savePath = await findExistingSummaryPath(yearMonth);
+  if (!savePath) {
+    throw new Error("エクスポートするデータがありません");
   }
 
   // ファイルを開く

@@ -11,6 +11,8 @@ vi.mock("@tauri-apps/plugin-fs", () => ({
   readFile: vi.fn(),
   writeFile: vi.fn(),
   exists: vi.fn(),
+  readDir: vi.fn(),
+  remove: vi.fn(),
 }));
 vi.mock("@tauri-apps/plugin-opener", () => ({
   openPath: vi.fn(),
@@ -20,7 +22,7 @@ vi.mock("../tauri/commands", () => ({
 }));
 
 import ExcelJS from "exceljs";
-import { calculateJpyTotal } from "./exporter";
+import { calculateJpyTotal, buildSummaryFileName } from "./exporter";
 import type { ReceiptData } from "../../types/receipt";
 import {
   ExcelColumnLabel,
@@ -74,6 +76,36 @@ describe("calculateJpyTotal", () => {
       makeReceipt({ currency: "JPY", status: "pending" }),
     ]);
     expect(total).toBe(100);
+  });
+});
+
+describe("buildSummaryFileName", () => {
+  it("formats small total with comma separator", () => {
+    expect(buildSummaryFileName("202603", 2100)).toBe(
+      "202603-summary-2,100円.xlsx",
+    );
+  });
+
+  it("formats zero total", () => {
+    expect(buildSummaryFileName("202604", 0)).toBe("202604-summary-0円.xlsx");
+  });
+
+  it("formats large total with multiple commas", () => {
+    expect(buildSummaryFileName("202512", 1234567)).toBe(
+      "202512-summary-1,234,567円.xlsx",
+    );
+  });
+
+  it("uses yearMonth prefix as-is", () => {
+    expect(buildSummaryFileName("202401", 100)).toBe(
+      "202401-summary-100円.xlsx",
+    );
+  });
+
+  it("contains no Windows-forbidden characters", () => {
+    const name = buildSummaryFileName("202603", 1234567890);
+    // Windows 禁則文字: < > : " | ? * \ /
+    expect(name).not.toMatch(/[<>:"|?*\\/]/);
   });
 });
 
