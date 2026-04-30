@@ -18,6 +18,21 @@ import { getRootDirectory } from "../tauri/commands";
 
 type SupportedImageExtension = "jpeg" | "png";
 
+/** 合計行の A 列ラベル */
+const TOTAL_ROW_LABEL = "合計金額";
+
+/**
+ * JPY 合計金額を計算する
+ * - currency が undefined または "JPY" のレシートのみ集計対象
+ * - amount が undefined の場合は 0 として扱う
+ */
+export function calculateJpyTotal(receipts: ReceiptData[]): number {
+  return receipts.reduce((sum, r) => {
+    if (r.currency && r.currency !== "JPY") return sum;
+    return sum + (r.amount ?? 0);
+  }, 0);
+}
+
 /**
  * ファイルパスから画像拡張子を取得
  */
@@ -126,8 +141,13 @@ export async function loadReceiptsFromExcel(
 
   const receipts: ReceiptData[] = [];
 
+  // 1 行目に合計行があるか判定（A1 セルが "合計金額" なら新フォーマット）
+  const firstCellValue = String(sheet.getRow(1).getCell(1).value ?? "");
+  const hasTotalRow = firstCellValue === TOTAL_ROW_LABEL;
+  const headerRowIndex = hasTotalRow ? 2 : 1;
+
   // ヘッダー行から新フォーマットか判定（"宛名"列の有無）
-  const headerRow = sheet.getRow(1);
+  const headerRow = sheet.getRow(headerRowIndex);
   let isNewFormat = false;
   headerRow.eachCell((cell) => {
     if (String(cell.value) === "宛名") {
@@ -148,7 +168,7 @@ export async function loadReceiptsFromExcel(
   };
 
   sheet.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return;
+    if (rowNumber <= headerRowIndex) return;
 
     const fileColIndex = isNewFormat
       ? getColumnIndex(ExcelColumnLabel.FileName)
@@ -331,11 +351,22 @@ async function generateSummaryExcel(
   const sheet = workbook.addWorksheet("Summary");
 
   // カラム設定（types/excel.ts の定義から生成）
+  // この時点で 1 行目にヘッダー行が自動配置される
   sheet.columns = generateSheetColumns();
 
-  // ヘッダー行のスタイル
-  sheet.views = [{ state: "frozen", ySplit: 1 }];
-  sheet.getRow(1).font = { bold: true };
+  // 合計行を 1 行目に挿入し、ヘッダー行を 2 行目へシフト
+  // データ行の addRow は 3 行目以降に積まれるので、画像アンカーも自然に追従する
+  const jpyTotal = calculateJpyTotal(receipts);
+  sheet.spliceRows(1, 0, [TOTAL_ROW_LABEL, jpyTotal]);
+
+  // 合計行（1 行目）のスタイル
+  const totalRow = sheet.getRow(1);
+  totalRow.font = { bold: true, size: 12 };
+  totalRow.getCell(2).numFmt = '"¥"#,##0';
+
+  // ヘッダー行（2 行目）のスタイル + 合計行とヘッダー行の 2 行を固定
+  sheet.views = [{ state: "frozen", ySplit: 2 }];
+  sheet.getRow(2).font = { bold: true };
 
   // 日付順でソート（昇順、undefined は末尾）
   const sortedReceipts = sortReceiptsByDate(receipts);
