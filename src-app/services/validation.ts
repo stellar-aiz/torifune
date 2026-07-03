@@ -53,8 +53,8 @@ function validateDateRange(
   if (!rule?.enabled) return null;
   if (!date || !DATE_FORMAT_REGEX.test(date)) return null;
 
-  const maxYearDiff = (rule.params.maxYearDiff as number) ?? 1;
-  const maxMonthDiff = (rule.params.maxMonthDiff as number) ?? 2;
+  const maxYearDiff = (rule.params?.maxYearDiff as number) ?? 1;
+  const maxMonthDiff = (rule.params?.maxMonthDiff as number) ?? 2;
 
   const targetYear = parseInt(targetSegment.slice(0, 4), 10);
   const targetMonth = parseInt(targetSegment.slice(4, 6), 10);
@@ -118,9 +118,9 @@ function calculateOutlierThresholds(
   lowerBound: number;
   upperBound: number;
 } {
-  const lowerMultiplier = (rule?.params.lowerMultiplier as number) ?? 1.5;
-  const upperMultiplier = (rule?.params.upperMultiplier as number) ?? 3.0;
-  const minSampleSize = (rule?.params.minSampleSize as number) ?? 4;
+  const lowerMultiplier = (rule?.params?.lowerMultiplier as number) ?? 1.5;
+  const upperMultiplier = (rule?.params?.upperMultiplier as number) ?? 3.0;
+  const minSampleSize = (rule?.params?.minSampleSize as number) ?? 4;
 
   if (totals.length < minSampleSize) {
     return { lowerBound: 0, upperBound: Infinity };
