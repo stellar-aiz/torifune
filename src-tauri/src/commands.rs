@@ -82,7 +82,7 @@ pub async fn ocr_receipt(
     file_content: String,
     mime_type: String,
 ) -> Result<OcrResult, String> {
-    let settings = get_ocr_settings(app).await?;
+    let settings = get_ocr_settings(app.clone()).await?;
     let registry = registry.lock().await;
 
     let provider = registry
@@ -94,7 +94,17 @@ pub async fn ocr_receipt(
         .await
     {
         Ok(data) => Ok(OcrResult::success(data)),
-        Err(e) => Ok(OcrResult::failure(e)),
+        Err(e) => {
+            let _ = crate::errorlog::write_log_entry(
+                &app,
+                "rust-ocr",
+                &e,
+                None,
+                None,
+                Some("single-file OCR"),
+            );
+            Ok(OcrResult::failure(e))
+        }
     }
 }
 
@@ -164,7 +174,17 @@ pub async fn batch_ocr_receipts(
                     .await
                 {
                     Ok(data) => OcrResult::success(data),
-                    Err(e) => OcrResult::failure(e),
+                    Err(e) => {
+                        let _ = crate::errorlog::write_log_entry(
+                            &app,
+                            "rust-ocr",
+                            &e,
+                            None,
+                            None,
+                            Some(&format!("batch OCR ({}/{})", index + 1, total)),
+                        );
+                        OcrResult::failure(e)
+                    }
                 };
 
                 // 完了数をインクリメント
@@ -757,4 +777,24 @@ pub async fn save_receiver_name_history(app: AppHandle, history: Value) -> Resul
         .map_err(|e| format!("履歴の保存に失敗しました: {}", e))?;
 
     Ok(())
+}
+
+// Logging commands
+
+/// フロントエンドから受け取ったエラーログを書き込む
+#[tauri::command]
+pub async fn write_error_log(
+    app: AppHandle,
+    entry: crate::errorlog::ErrorLogEntry,
+) -> Result<String, String> {
+    crate::errorlog::write_log_entry(
+        &app,
+        "frontend",
+        &entry.message,
+        entry.stack.as_deref(),
+        entry.component_stack.as_deref(),
+        entry.context.as_deref(),
+    )
+    .map(|p| p.to_string_lossy().to_string())
+    .map_err(|e| format!("ログの書き込みに失敗しました: {}", e))
 }
