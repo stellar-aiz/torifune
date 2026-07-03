@@ -1,5 +1,6 @@
 mod auth;
 mod commands;
+mod errorlog;
 mod providers;
 
 use providers::OcrProviderRegistry;
@@ -22,6 +23,32 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .manage(registry)
         .setup(|app| {
+            // パニックフックを設置し、パニック発生時にエラーログへ記録する
+            let app_handle_for_panic = app.handle().clone();
+            std::panic::set_hook(Box::new(move |info| {
+                let location = info
+                    .location()
+                    .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+                    .unwrap_or_else(|| "unknown".into());
+                let message = info
+                    .payload()
+                    .downcast_ref::<&str>()
+                    .map(|s| s.to_string())
+                    .or_else(|| info.payload().downcast_ref::<String>().cloned())
+                    .unwrap_or_else(|| "unknown panic".into());
+                let backtrace = std::backtrace::Backtrace::force_capture();
+                let full = format!("{} at {}\n{}", message, location, backtrace);
+                eprintln!("{}", full);
+                let _ = crate::errorlog::write_log_entry(
+                    &app_handle_for_panic,
+                    "rust-panic",
+                    &full,
+                    None,
+                    None,
+                    None,
+                );
+            }));
+
             // Deep link: Check if app was started via deep link
             if let Some(urls) = app.deep_link().get_current()? {
                 println!("App started via deep link: {:?}", urls);
@@ -81,6 +108,8 @@ pub fn run() {
             auth::save_auth_tokens,
             auth::clear_auth_tokens,
             auth::open_oauth_url,
+            // Logging commands
+            commands::write_error_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -205,3 +205,13 @@ export async function saveReceiverNameHistory(
 ): Promise<void> {
   return invoke<void>("save_receiver_name_history", { history });
 }
+
+/** エラーログをファイルに書き込む */
+export async function writeErrorLog(entry: {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  context?: string;
+}): Promise<string> {
+  return invoke<string>("write_error_log", { entry });
+}

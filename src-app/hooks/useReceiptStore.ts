@@ -28,6 +28,7 @@ import {
   generateThumbnail,
 } from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
+import { setBreadcrumb } from "../services/errorLog";
 import type { ValidationRule } from "../types/validationRule";
 import { mergeWithDefaultRules } from "../types/validationRule";
 import {
@@ -366,6 +367,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     if (pendingReceipts.length === 0) return;
 
     setIsProcessing(true);
+    setBreadcrumb(`OCR batch (${pendingReceipts.length} receipts)`);
 
     // 勘定科目ルールを読み込み
     let accountCategoryRules: AccountCategoryRule[] = [];
@@ -529,6 +531,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
     } finally {
       unlisten?.();
       setIsProcessing(false);
+      setBreadcrumb(undefined);
     }
   }, [currentMonthId, currentYearMonth, currentReceipts]);
 
