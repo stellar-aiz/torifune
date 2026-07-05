@@ -215,3 +215,21 @@ export async function writeErrorLog(entry: {
 }): Promise<string> {
   return invoke<string>("write_error_log", { entry });
 }
+
+/** error.log から読み取った1エントリ */
+export interface ErrorLogRecord {
+  timestamp: string;
+  source: string;
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  context?: string;
+  appVersion: string;
+  os: string;
+  arch: string;
+}
+
+/** 直近30日分のエラーログを読み取る */
+export async function readErrorLog(): Promise<ErrorLogRecord[]> {
+  return invoke<ErrorLogRecord[]>("read_error_log");
+}

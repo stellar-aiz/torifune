@@ -45,6 +45,7 @@
       "allow": [{ "path": "**" }]
     },
     "store:default",
-    "os:default"
+    "os:default",
+    "clipboard-manager:allow-write-text"
   ]
 }

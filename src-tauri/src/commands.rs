@@ -798,3 +798,12 @@ pub async fn write_error_log(
     .map(|p| p.to_string_lossy().to_string())
     .map_err(|e| format!("ログの書き込みに失敗しました: {}", e))
 }
+
+/// 直近30日分のエラーログを読み取って返す
+#[tauri::command]
+pub async fn read_error_log(
+    app: AppHandle,
+) -> Result<Vec<crate::errorlog::ErrorLogRecord>, String> {
+    crate::errorlog::read_recent_log_entries(&app, 30)
+        .map_err(|e| format!("ログの読み込みに失敗しました: {}", e))
+}
