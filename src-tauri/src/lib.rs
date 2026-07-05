@@ -20,6 +20,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_deep_link::init())
         .manage(registry)
         .setup(|app| {
@@ -110,6 +111,7 @@ pub fn run() {
             auth::open_oauth_url,
             // Logging commands
             commands::write_error_log,
+            commands::read_error_log,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
