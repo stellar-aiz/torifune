@@ -28,6 +28,7 @@ import {
   generateThumbnail,
 } from "../services/pdf/pdfExtractor";
 import { validateAllReceipts } from "../services/validation";
+import { normalizeOcrResultData } from "../services/ocrResult";
 import { setBreadcrumb } from "../services/errorLog";
 import type { ValidationRule } from "../types/validationRule";
 import { mergeWithDefaultRules } from "../types/validationRule";
@@ -428,11 +429,7 @@ export function useReceiptStore(): UseReceiptStoreReturn {
                           return {
                             ...r,
                             status: "success" as const,
-                            merchant: result.data.merchant,
-                            date: result.data.date,
-                            amount: result.data.amount,
-                            currency: result.data.currency,
-                            receiverName: result.data.receiverName,
+                            ...normalizeOcrResultData(result.data),
                             accountCategory,
                           };
                         } else {
