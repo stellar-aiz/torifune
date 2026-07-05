@@ -10,6 +10,7 @@ import {
   FiUser,
   FiInfo,
   FiLogIn,
+  FiFileText,
 } from "react-icons/fi";
 import { useSettingsStore } from "../../hooks/useSettingsStore";
 import {
@@ -27,6 +28,7 @@ import { ValidationRulesSettings } from "./ValidationRulesSettings";
 import { ReceiverNameHistorySettings } from "./ReceiverNameHistorySettings";
 import { AboutSettings } from "./AboutSettings";
 import { LoginSettings } from "./LoginSettings";
+import { LogsSettings } from "./LogsSettings";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 
 interface SettingsModalProps {
@@ -41,6 +43,7 @@ type SettingsTab =
   | "validationRules"
   | "receiverNameHistory"
   | "login"
+  | "logs"
   | "about";
 
 const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
@@ -66,6 +69,7 @@ const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
   },
   { id: "ocr", label: "OCR設定", icon: <FiCpu className="w-4 h-4" /> },
   { id: "login", label: "アカウント", icon: <FiLogIn className="w-4 h-4" /> },
+  { id: "logs", label: "ログ", icon: <FiFileText className="w-4 h-4" /> },
   { id: "about", label: "アプリ情報", icon: <FiInfo className="w-4 h-4" /> },
 ];
 
@@ -510,6 +514,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             )}
 
             {activeTab === "login" && <LoginSettings />}
+
+            {activeTab === "logs" && <LogsSettings />}
 
             {activeTab === "about" && <AboutSettings />}
           </div>
